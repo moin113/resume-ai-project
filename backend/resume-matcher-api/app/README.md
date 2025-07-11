@@ -31,10 +31,6 @@ resume_matcher/
 ├── requirements.txt
 └── README.md
 
-yaml
-Copy
-Edit
-
 ---
 
 ## ⚙️ **Setup**
