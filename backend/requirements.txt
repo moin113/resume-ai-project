@@ -42,3 +42,6 @@ pytest-flask==1.2.0
 # Additional dependencies
 typing-extensions>=4.0.0
 cython<3.0
+
+# Production server
+gunicorn==21.2.0
