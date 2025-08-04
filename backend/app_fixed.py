@@ -301,24 +301,7 @@ def create_app():
     return render_template('account.html')
     def job_descriptions():
         """Job descriptions page"""
-        return render_template('add_jd.html')
-    @app.route('/add-job-description')
-    def add_jd_page():
-        """Add job description page (alternative route)"""
-        return render_template('add_jd.html')
-    @app.route('/keywords')
-    def keywords():
-        """Keywords page"""
-        return render_template('keywords.html')
-    @app.route('/matching')
-    def matching():
-        """Matching page"""
-        return render_template('matching.html')
-    @app.route('/suggestions')
-    def suggestions():
-        """Suggestions page"""
-        return render_template('suggestions.html')
-    @app.route('/account')
+    return render_template('account.html')
     def account():
         """Account page"""
         return render_template('account.html')
