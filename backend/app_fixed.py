@@ -293,18 +293,7 @@ def create_app():
                 'success': False,
                 'message': f'Error: {str(e)}'
             }), 500
-    
-    # Frontend routes
-    @app.route('/')
-    def landing():
-        """Landing page"""
-    return render_template('account.html')
-    def job_descriptions():
-        """Job descriptions page"""
-    return render_template('account.html')
-    def account():
-        """Account page"""
-        return render_template('account.html')
+
     
     # Health check endpoints
     @app.route('/health')
