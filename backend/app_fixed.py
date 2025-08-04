@@ -298,24 +298,7 @@ def create_app():
     @app.route('/')
     def landing():
         """Landing page"""
-        return render_template('landing.html')
-    @app.route('/register')
-    def register_page():
-        """Registration page"""
-        return render_template('register.html')
-    @app.route('/login')
-    def login_page():
-        """Login page"""
-        return render_template('login.html')
-    @app.route('/dashboard')
-    def dashboard():
-        """Dashboard page"""
-        return render_template('dashboard.html')
-    @app.route('/upload')
-    def upload_page():
-        """Upload page"""
-        return render_template('upload.html')
-    @app.route('/job-descriptions')
+    return render_template('account.html')
     def job_descriptions():
         """Job descriptions page"""
         return render_template('add_jd.html')
