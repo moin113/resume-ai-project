@@ -1,0 +1,2 @@
+# SuggestionsService compatibility shim
+from .dynamic_suggestions_service import DynamicSuggestionsService as SuggestionsService
