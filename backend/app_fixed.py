@@ -78,6 +78,12 @@ def create_app():
         print("✅ Auth routes registered")
     except Exception as e:
         print(f"❌ Auth routes ERROR: {e}")
+    try:
+        from backend.routes.auth_routes import auth_bp
+        app.register_blueprint(auth_bp)
+        print("✅ Auth routes registered")
+    except Exception as e:
+        print(f"❌ Auth routes ERROR: {e}")
         import traceback
         traceback.print_exc()
     try:
@@ -116,66 +122,50 @@ def create_app():
         print("✅ Account routes registered")
     except Exception as e:
         print(f"⚠️ Account routes warning: {e}")
-
-    # Simple auth routes and test routes removed - using integrated routes only
-
-    # Add missing API endpoints
-    @app.route('/api/scan_history')
-    @jwt_required()
-    def scan_history():
-        """Scan history endpoint (alias for history)"""
-        try:
-            from flask_jwt_extended import get_jwt_identity
-            from models import MatchScore, Resume, JobDescription
-
-            user_id = get_jwt_identity()
-
-            # Get recent match scores
-            matches = db.session.query(MatchScore, Resume, JobDescription)\
-                .join(Resume, MatchScore.resume_id == Resume.id)\
-                .join(JobDescription, MatchScore.job_description_id == JobDescription.id)\
-                .filter(MatchScore.user_id == user_id)\
-                .order_by(MatchScore.created_at.desc())\
-                .limit(10)\
-                .all()
-
-            history = []
-            for match, resume, jd in matches:
-                history.append({
-                    'id': match.id,
-                    'resume_title': resume.title or resume.original_filename,
-                    'job_title': jd.title,
-                    'company': jd.company_name,
-                    'overall_score': match.overall_score,
-                    'created_at': match.created_at.isoformat()
-                })
-
-            return jsonify({
-                'success': True,
-                'history': history,
-                'total': len(history)
-            })
-
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': f'Error loading history: {str(e)}'
-            }), 500
-
-    @app.route('/api/account')
-    @jwt_required()
-    def account_info():
-        """Account information endpoint (alias for account_info)"""
-        try:
-            from flask_jwt_extended import get_jwt_identity
-            from models import User
-
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-
-            if not user:
-                return jsonify({
-                    'success': False,
+    @app.route('/')
+    def landing():
+        """Landing page"""
+        return render_template('landing.html')
+    @app.route('/register')
+    def register_page():
+        """Registration page"""
+        return render_template('register.html')
+    @app.route('/login')
+    def login_page():
+        """Login page"""
+        return render_template('login.html')
+    @app.route('/dashboard')
+    def dashboard():
+        """Dashboard page"""
+        return render_template('dashboard.html')
+    @app.route('/upload')
+    def upload_page():
+        """Upload page"""
+        return render_template('upload.html')
+    @app.route('/job-descriptions')
+    def job_descriptions():
+        """Job descriptions page"""
+        return render_template('add_jd.html')
+    @app.route('/add-job-description')
+    def add_jd_page():
+        """Add job description page (alternative route)"""
+        return render_template('add_jd.html')
+    @app.route('/keywords')
+    def keywords():
+        """Keywords page"""
+        return render_template('keywords.html')
+    @app.route('/matching')
+    def matching():
+        """Matching page"""
+        return render_template('matching.html')
+    @app.route('/suggestions')
+    def suggestions():
+        """Suggestions page"""
+        return render_template('suggestions.html')
+    @app.route('/account')
+    def account():
+        """Account page"""
+        return render_template('account.html')
                     'message': 'User not found'
                 }), 404
 
@@ -661,7 +651,8 @@ def create_app():
     def basic_suggestions():
         """Generate basic suggestions for resume improvement"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
+            from flask_jwt_extended import get_jwt_identity
 
             current_user_id = get_jwt_identity()
             data = request.get_json()
@@ -700,7 +691,8 @@ def create_app():
     def premium_suggestions():
         """Generate premium AI-powered suggestions"""
         try:
-            from services.premium_suggestions_service import PremiumSuggestionsService
+            from backend.services.premium_suggestions_service import PremiumSuggestionsService
+            from flask_jwt_extended import get_jwt_identity
 
             current_user_id = get_jwt_identity()
             data = request.get_json()
@@ -747,7 +739,8 @@ def create_app():
     def suggestion_history():
         """Get suggestion history for the user"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
+            from flask_jwt_extended import get_jwt_identity
 
             current_user_id = get_jwt_identity()
             limit = request.args.get('limit', 10, type=int)
@@ -823,10 +816,14 @@ def create_app():
     def test_basic_suggestions():
         """Test basic suggestions without authentication"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
 
             # Create test data in database
-            from models import db, User, Resume, JobDescription
+            from backend import models
+            db = models.db
+            User = models.User
+            Resume = models.Resume
+            JobDescription = models.JobDescription
 
             with app.app_context():
                 # Get or create test user
