@@ -166,27 +166,6 @@ def create_app():
     def account():
         """Account page"""
         return render_template('account.html')
-                    'message': 'User not found'
-                }), 404
-
-            return jsonify({
-                'success': True,
-                'user': {
-                    'id': user.id,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'email': user.email,
-                    'role': getattr(user, 'role', 'user'),
-                    'is_active': getattr(user, 'is_active', True),
-                    'created_at': user.created_at.isoformat() if hasattr(user, 'created_at') else None
-                }
-            })
-
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'message': f'Error loading account: {str(e)}'
-            }), 500
 
     @app.route('/api/change_password', methods=['PUT', 'POST'])
     @jwt_required()
@@ -912,25 +891,27 @@ def main():
     print("🩺" + "="*50 + "🩺")
     print("🚀 Starting Dr. Resume Application")
     print("="*52)
-    
+
     # Create directories if they don't exist
     os.makedirs('../database', exist_ok=True)
     os.makedirs('../uploads', exist_ok=True)
-    
+
     # Create and run app
     app = create_app()
-    
+
+
     print("🌐 Starting Flask development server...")
     print("📍 Available at: http://localhost:5000")
     print("🔧 Debug mode: ON")
     print("="*52)
-    
+
     try:
         app.run(host='0.0.0.0', port=5000, debug=True)
     except KeyboardInterrupt:
         print("\n👋 Shutting down Dr. Resume...")
     except Exception as e:
         print(f"❌ Server error: {e}")
+
 
 if __name__ == '__main__':
     main()
