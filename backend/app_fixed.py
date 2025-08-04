@@ -16,9 +16,10 @@ def create_app():
     print("🏗️ Creating Dr. Resume Flask App...")
     
     # Create Flask app
-    app = Flask(__name__, 
-                template_folder='../frontend',
-                static_folder='../frontend/static')
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    TEMPLATE_DIR = os.path.join(BASE_DIR, '../frontend')
+    STATIC_DIR = os.path.join(BASE_DIR, '../frontend/static')
+    app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
     
     # Basic configuration with absolute paths
     import os
@@ -72,53 +73,45 @@ def create_app():
 
     # Register routes with error handling
     try:
-        from routes.us05_auth_routes import auth_bp
+        from backend.routes.auth_routes import auth_bp
         app.register_blueprint(auth_bp)
         print("✅ Auth routes registered")
     except Exception as e:
         print(f"❌ Auth routes ERROR: {e}")
         import traceback
         traceback.print_exc()
-    
     try:
-        from routes.us05_upload_routes import upload_bp
+        from backend.routes.upload_routes import upload_bp
         app.register_blueprint(upload_bp)
         print("✅ Upload routes registered")
     except Exception as e:
         print(f"⚠️ Upload routes warning: {e}")
-    
     try:
-        from routes.us05_jd_routes import jd_bp
+        from backend.routes.jd_routes import jd_bp
         app.register_blueprint(jd_bp)
         print("✅ Job description routes registered")
     except Exception as e:
         print(f"⚠️ JD routes warning: {e}")
-    
-    # Keyword routes removed - keywords are now extracted automatically during upload
-    
     try:
-        from routes.us06_matching_routes import matching_bp
+        from backend.routes.matching_routes import matching_bp
         app.register_blueprint(matching_bp)
         print("✅ Matching routes registered")
     except Exception as e:
         print(f"⚠️ Matching routes warning: {e}")
-    
     try:
-        from routes.us07_suggestions_routes import suggestions_bp
+        from backend.routes.suggestions_routes import suggestions_bp
         app.register_blueprint(suggestions_bp)
         print("✅ Suggestions routes registered")
     except Exception as e:
         print(f"⚠️ Suggestions routes warning: {e}")
-
     try:
-        from routes.us10_history_routes import history_bp
+        from backend.routes.history_routes import history_bp
         app.register_blueprint(history_bp)
         print("✅ History routes registered")
     except Exception as e:
         print(f"⚠️ History routes warning: {e}")
-
     try:
-        from routes.us10_account_routes import account_bp
+        from backend.routes.account_route import account_bp
         app.register_blueprint(account_bp)
         print("✅ Account routes registered")
     except Exception as e:
@@ -336,57 +329,47 @@ def create_app():
     @app.route('/')
     def landing():
         """Landing page"""
-        return render_template('us10_landing.html')
-    
+        return render_template('landing.html')
     @app.route('/register')
     def register_page():
         """Registration page"""
-        return render_template('us10_register.html')
-    
+        return render_template('register.html')
     @app.route('/login')
     def login_page():
         """Login page"""
-        return render_template('us10_login.html')
-    
+        return render_template('login.html')
     @app.route('/dashboard')
     def dashboard():
         """Dashboard page"""
-        return render_template('us10_dashboard.html')
-    
+        return render_template('dashboard.html')
     @app.route('/upload')
     def upload_page():
         """Upload page"""
-        return render_template('us10_upload.html')
-    
+        return render_template('upload.html')
     @app.route('/job-descriptions')
     def job_descriptions():
         """Job descriptions page"""
-        return render_template('us10_add_jd.html')
-
+        return render_template('add_jd.html')
     @app.route('/add-job-description')
     def add_jd_page():
         """Add job description page (alternative route)"""
-        return render_template('us10_add_jd.html')
-    
+        return render_template('add_jd.html')
     @app.route('/keywords')
     def keywords():
         """Keywords page"""
-        return render_template('us10_keywords.html')
-    
+        return render_template('keywords.html')
     @app.route('/matching')
     def matching():
         """Matching page"""
-        return render_template('us10_matching.html')
-    
+        return render_template('matching.html')
     @app.route('/suggestions')
     def suggestions():
         """Suggestions page"""
-        return render_template('us10_suggestions.html')
-    
+        return render_template('suggestions.html')
     @app.route('/account')
     def account():
         """Account page"""
-        return render_template('us10_account.html')
+        return render_template('account.html')
     
     # Health check endpoints
     @app.route('/health')
