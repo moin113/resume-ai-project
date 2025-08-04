@@ -4,12 +4,13 @@ Fixed Flask Application for US-10
 Complete integration with proper error handling and sequential US features
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, render_template, send_from_directory, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required
 from datetime import datetime
-import os
-import sys
 
 def create_app():
     """Create and configure the Flask application"""
@@ -17,12 +18,11 @@ def create_app():
     
     # Create Flask app
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    TEMPLATE_DIR = os.path.join(BASE_DIR, '../frontend')
+    TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
     STATIC_DIR = os.path.join(BASE_DIR, '../frontend/static')
     app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
     
     # Basic configuration with absolute paths
-    import os
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
     db_path = os.path.join(project_root, 'database', 'dr_resume_dev.db')
