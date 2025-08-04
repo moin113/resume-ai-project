@@ -1,5 +1,4 @@
-# Dr. Resume US-10 Complete Requirements: Local AI + Full Integration
-# All dependencies for the complete Dr. Resume application
+--only-binary=:all:
 
 # Core Flask Framework
 Flask==2.3.3
@@ -20,23 +19,24 @@ python-docx==0.8.11
 
 # NLP & Text Analysis (REQUIRED for Local AI)
 nltk==3.8.1
-spacy>=3.6.1
+spacy==3.6.1
 scikit-learn>=1.4.0
 numpy>=1.26.0
 
 # Similarity & Matching Algorithms
 fuzzywuzzy==0.18.0
-python-Levenshtein==0.21.1
+rapidfuzz==3.1.1   # replaces python-Levenshtein safely
 
 # Environment & Configuration
 python-dotenv==1.0.0
 
-# AI & Premium Features (Optional - Local AI works without this)
+# AI & Premium Features
 openai>=1.0.0
 
 # Development & Testing
 pytest==7.4.2
 pytest-flask==1.2.0
 
-# Additional dependencies for Local AI
+# Additional dependencies
 typing-extensions>=4.0.0
+cython<3.0
