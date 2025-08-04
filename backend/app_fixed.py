@@ -64,7 +64,8 @@ def create_app():
     
     # Initialize database
     try:
-        from models import db
+        from backend import models
+        db = models.db
         db.init_app(app)
         print("✅ Database initialized")
     except Exception as e:
@@ -72,7 +73,7 @@ def create_app():
 
     # Register routes with error handling
     try:
-        from routes.us05_auth_routes import auth_bp
+        from backend.routes.us05_auth_routes import auth_bp
         app.register_blueprint(auth_bp)
         print("✅ Auth routes registered")
     except Exception as e:
@@ -81,14 +82,14 @@ def create_app():
         traceback.print_exc()
     
     try:
-        from routes.us05_upload_routes import upload_bp
+        from backend.routes.us05_upload_routes import upload_bp
         app.register_blueprint(upload_bp)
         print("✅ Upload routes registered")
     except Exception as e:
         print(f"⚠️ Upload routes warning: {e}")
     
     try:
-        from routes.us05_jd_routes import jd_bp
+        from backend.routes.us05_jd_routes import jd_bp
         app.register_blueprint(jd_bp)
         print("✅ Job description routes registered")
     except Exception as e:
@@ -97,28 +98,28 @@ def create_app():
     # Keyword routes removed - keywords are now extracted automatically during upload
     
     try:
-        from routes.us06_matching_routes import matching_bp
+        from backend.routes.us06_matching_routes import matching_bp
         app.register_blueprint(matching_bp)
         print("✅ Matching routes registered")
     except Exception as e:
         print(f"⚠️ Matching routes warning: {e}")
     
     try:
-        from routes.us07_suggestions_routes import suggestions_bp
+        from backend.routes.us07_suggestions_routes import suggestions_bp
         app.register_blueprint(suggestions_bp)
         print("✅ Suggestions routes registered")
     except Exception as e:
         print(f"⚠️ Suggestions routes warning: {e}")
 
     try:
-        from routes.us10_history_routes import history_bp
+        from backend.routes.us10_history_routes import history_bp
         app.register_blueprint(history_bp)
         print("✅ History routes registered")
     except Exception as e:
         print(f"⚠️ History routes warning: {e}")
 
     try:
-        from routes.us10_account_routes import account_bp
+        from backend.routes.us10_account_routes import account_bp
         app.register_blueprint(account_bp)
         print("✅ Account routes registered")
     except Exception as e:
@@ -133,7 +134,7 @@ def create_app():
         """Scan history endpoint (alias for history)"""
         try:
             from flask_jwt_extended import get_jwt_identity
-            from models import MatchScore, Resume, JobDescription
+            from backend.models import MatchScore, Resume, JobDescription
 
             user_id = get_jwt_identity()
 
@@ -175,7 +176,7 @@ def create_app():
         """Account information endpoint (alias for account_info)"""
         try:
             from flask_jwt_extended import get_jwt_identity
-            from models import User
+            from backend.models import User
 
             user_id = get_jwt_identity()
             user = User.query.get(user_id)
@@ -211,7 +212,7 @@ def create_app():
         """Change password endpoint"""
         try:
             from flask_jwt_extended import get_jwt_identity
-            from models import User
+            from backend.models import User
 
             user_id = get_jwt_identity()
             user = User.query.get(user_id)
@@ -260,8 +261,8 @@ def create_app():
         """Test basic suggestions with proper data setup"""
         try:
             from flask_jwt_extended import get_jwt_identity
-            from models import User, Resume, JobDescription
-            from services.suggestions_service import SuggestionsService
+            from backend.models import User, Resume, JobDescription
+            from backend.services.suggestions_service import SuggestionsService
 
             user_id = get_jwt_identity()
             user = User.query.get(user_id)
@@ -413,11 +414,11 @@ def create_app():
     def test_suggestions():
         """Test suggestions without authentication"""
         try:
-            from services.dynamic_suggestions_service import DynamicSuggestionsService
+            from backend.services.dynamic_suggestions_service import DynamicSuggestionsService
 
             # Create test data in database first
             with app.app_context():
-                from models import User, Resume, JobDescription
+                from backend.models import User, Resume, JobDescription
 
                 # Get or create test user
                 user = User.query.filter_by(email='test@drresume.com').first()
@@ -499,8 +500,8 @@ def create_app():
     def add_job_description():
         """Add a new job description"""
         try:
-            from models import db, JobDescription
-            from services.keyword_parser import KeywordParser
+            from backend.models import db, JobDescription
+            from backend.services.keyword_parser import KeywordParser
 
             current_user_id = get_jwt_identity()
             data = request.get_json()
@@ -570,7 +571,7 @@ def create_app():
     def available_suggestions():
         """Get available resumes and job descriptions for suggestions"""
         try:
-            from models import db, Resume, JobDescription
+            from backend.models import db, Resume, JobDescription
             from flask_jwt_extended import get_jwt_identity
 
             current_user_id = get_jwt_identity()
@@ -623,7 +624,7 @@ def create_app():
     def test_available_data():
         """Test endpoint to check available resumes and job descriptions"""
         try:
-            from models import db, Resume, JobDescription
+            from backend.models import db, Resume, JobDescription
 
             with app.app_context():
                 # Get all resumes
@@ -678,7 +679,7 @@ def create_app():
     def basic_suggestions():
         """Generate basic suggestions for resume improvement"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
 
             current_user_id = get_jwt_identity()
             data = request.get_json()
@@ -717,7 +718,7 @@ def create_app():
     def premium_suggestions():
         """Generate premium AI-powered suggestions"""
         try:
-            from services.premium_suggestions_service import PremiumSuggestionsService
+            from backend.services.premium_suggestions_service import PremiumSuggestionsService
 
             current_user_id = get_jwt_identity()
             data = request.get_json()
@@ -764,7 +765,7 @@ def create_app():
     def suggestion_history():
         """Get suggestion history for the user"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
 
             current_user_id = get_jwt_identity()
             limit = request.args.get('limit', 10, type=int)
@@ -791,7 +792,7 @@ def create_app():
     def test_upload():
         """Test upload functionality without file validation"""
         try:
-            from models import db, User, Resume
+            from backend.models import db, User, Resume
 
             with app.app_context():
                 # Get test user
@@ -840,10 +841,10 @@ def create_app():
     def test_basic_suggestions():
         """Test basic suggestions without authentication"""
         try:
-            from services.suggestions_service import SuggestionsService
+            from backend.services.suggestions_service import SuggestionsService
 
             # Create test data in database
-            from models import db, User, Resume, JobDescription
+            from backend.models import db, User, Resume, JobDescription
 
             with app.app_context():
                 # Get or create test user
