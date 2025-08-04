@@ -954,3 +954,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# Expose app for Gunicorn
+app = create_app()
