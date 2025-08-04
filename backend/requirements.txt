@@ -22,7 +22,7 @@ python-docx==0.8.11
 nltk==3.8.1
 spacy>=3.6.1
 scikit-learn>=1.4.0
-numpy==1.24.3
+numpy>=1.26.0
 
 # Similarity & Matching Algorithms
 fuzzywuzzy==0.18.0
