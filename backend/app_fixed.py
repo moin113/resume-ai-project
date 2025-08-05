@@ -13,13 +13,6 @@ import sys
 
 
 def create_app():
-    @app.route('/')
-    def index():
-        return (
-            '<h1>Resume Doctor API</h1>'
-            '<p>Welcome! The API is running.<br>'
-            'See <a href="/api/test-available-data">/api/test-available-data</a> for a test endpoint.</p>'
-        )
     """Create and configure the Flask application"""
     print("🏗️ Creating Dr. Resume Flask App...")
 
