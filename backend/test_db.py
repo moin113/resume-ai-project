@@ -3,8 +3,14 @@
 Test database connection
 """
 
+
 import os
 import sys
+# Ensure project root is in sys.path for absolute imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 def test_database():
     """Test database connection"""
@@ -65,7 +71,7 @@ def test_flask_models():
         
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-        
+
         # Import models
         from backend.models import db, User
         
