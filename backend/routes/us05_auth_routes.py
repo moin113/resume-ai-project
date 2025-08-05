@@ -1,3 +1,30 @@
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, create_access_token
+
+# Create blueprint for authentication routes (move above refresh endpoint)
+auth_bp = Blueprint('auth', __name__, url_prefix='/api')
+# Refresh access token endpoint
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """Refresh access token using refresh token"""
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        # Create a new access token
+        access_token = create_access_token(
+            identity=user.id,
+            additional_claims={
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role
+            }
+        )
+        return jsonify({'success': True, 'access_token': access_token}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Token refresh failed', 'error': str(e)}), 500
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from backend.models import db, User
