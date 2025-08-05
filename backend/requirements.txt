@@ -44,5 +44,5 @@ gunicorn
 # Additional dependencies for Local AI
 typing-extensions>=4.0.0
 
-"Add psycopg2-binary for PostgreSQL support"
+psycopg2-binary
 psycopg2-binary
