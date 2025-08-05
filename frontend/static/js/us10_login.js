@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function verifyTokenAndRedirect() {
     try {
         const token = localStorage.getItem('access_token');
-        
+        console.log('DEBUG: Token before /api/profile:', token);
         const response = await fetch('/api/profile', {
             method: 'GET',
             headers: {
@@ -85,7 +85,6 @@ async function verifyTokenAndRedirect() {
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('user');
         }
-        
     } catch (error) {
         console.error('Token verification error:', error);
         localStorage.removeItem('access_token');
