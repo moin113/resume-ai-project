@@ -9,7 +9,7 @@ import json
 import re
 from typing import Dict, List, Set, Tuple
 from backend.models import Resume, JobDescription
-from services.matching_service import MatchingService
+from backend.services.matching_service import MatchingService
 
 class DynamicSuggestionsService:
     """Enhanced suggestions service with advanced NLP-based keyword analysis"""
