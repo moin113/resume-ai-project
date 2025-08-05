@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-from models import db, User, Resume
-from services.file_parser import FileParser
-from services.keyword_parser import KeywordParser
+from backend.models import db, User, Resume
+from backend.services.file_parser import FileParser
+from backend.services.keyword_parser import KeywordParser
 import os
 import uuid
 from datetime import datetime

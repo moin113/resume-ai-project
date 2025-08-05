@@ -5,8 +5,8 @@ API endpoints for calculating and retrieving resume-job description matching sco
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, Resume, JobDescription, MatchScore
-from services.matching_service import MatchingService
+from backend.models import db, User, Resume, JobDescription, MatchScore
+from backend.services.matching_service import MatchingService
 from datetime import datetime
 
 # Create blueprint for matching routes

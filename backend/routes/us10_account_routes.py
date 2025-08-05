@@ -4,8 +4,8 @@ API endpoints for updating user account information
 """
 
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User
-from middleware.auth_middleware import protected_route, monitored_route
+from backend.models import db, User
+from backend.middleware.auth_middleware import protected_route, monitored_route
 from werkzeug.security import check_password_hash
 import re
 import logging

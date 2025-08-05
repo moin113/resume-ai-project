@@ -5,11 +5,11 @@ API endpoints for generating keyword suggestions and recommendations
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import User, Resume, JobDescription, MatchScore, Suggestion
-from middleware.auth_middleware import protected_route, premium_route, monitored_route
-from services.dynamic_suggestions_service import DynamicSuggestionsService
+from backend.models import User, Resume, JobDescription, MatchScore, Suggestion
+from backend.middleware.auth_middleware import protected_route, premium_route, monitored_route
+from backend.services.dynamic_suggestions_service import DynamicSuggestionsService
 try:
-    from services.premium_suggestions_service import PremiumSuggestionsService
+    from backend.services.premium_suggestions_service import PremiumSuggestionsService
     premium_service = PremiumSuggestionsService()
 except ImportError:
     premium_service = None

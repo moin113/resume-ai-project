@@ -5,7 +5,7 @@ API endpoints for retrieving user's scan history, statistics, and dashboard data
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, Resume, JobDescription, MatchScore
+from backend.models import db, User, Resume, JobDescription, MatchScore
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 import json

@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, JobDescription
-from services.keyword_parser import KeywordParser
+from backend.models import db, User, JobDescription
+from backend.services.keyword_parser import KeywordParser
 from datetime import datetime
 
 # Create blueprint for job description routes
