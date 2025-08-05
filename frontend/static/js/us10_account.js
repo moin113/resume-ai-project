@@ -21,7 +21,7 @@ async function checkAuthentication() {
     
     if (!token) {
         console.log('❌ No token found, redirecting to login');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
         return;
     }
     
@@ -39,7 +39,7 @@ async function checkAuthentication() {
                 alert('Session expired. Please log in again.');
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
-                window.location.href = '/login';
+                window.location.href = 'us10_login.html';
                 return;
             }
             throw new Error('Token verification failed');
@@ -292,7 +292,7 @@ function upgradeToPremium() {
 function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    window.location.href = '/login';
+    window.location.href = 'us10_login.html';
 }
 
 function showAlert(message, type = 'info') {

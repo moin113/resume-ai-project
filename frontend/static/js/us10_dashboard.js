@@ -36,7 +36,7 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
             // Refresh failed, log out
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
-            window.location.href = '/login';
+            window.location.href = 'us10_login.html';
             return null;
         }
     }
@@ -1086,7 +1086,7 @@ async function checkAuthentication() {
     const token = localStorage.getItem('dr_resume_token');
     if (!token) {
         console.log('❌ No token found, redirecting to login');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
         return;
     }
     try {
