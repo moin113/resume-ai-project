@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function checkAuthentication() {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     if (!token) {
         console.log('❌ No token found, redirecting to login');
@@ -37,8 +37,8 @@ async function checkAuthentication() {
         if (!response.ok) {
             if (response.status === 401) {
                 alert('Session expired. Please log in again.');
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('dr_resume_token');
+                localStorage.removeItem('dr_resume_refresh_token');
                 window.location.href = 'us10_login.html';
                 return;
             }
@@ -51,14 +51,14 @@ async function checkAuthentication() {
         console.log('✅ Token verified successfully');
     } catch (error) {
         console.error('❌ Authentication failed:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('dr_resume_token');
+        localStorage.removeItem('dr_resume_refresh_token');
         window.location.href = '/login';
     }
 }
 
 async function loadUserInfo() {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/profile', {
@@ -82,7 +82,7 @@ async function loadUserInfo() {
 }
 
 async function loadAccountInfo() {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/account_info', {
@@ -151,7 +151,7 @@ async function handlePersonalInfoUpdate(event) {
         delete data.current_password;
     }
     
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/update_account', {
@@ -193,7 +193,7 @@ async function handlePasswordChange(event) {
         return;
     }
     
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/change_password', {
@@ -253,7 +253,7 @@ async function deleteAccount() {
         return;
     }
     
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('dr_resume_token');
     
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/delete_account', {
@@ -290,8 +290,8 @@ function upgradeToPremium() {
 }
 
 function logout() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('dr_resume_token');
+    localStorage.removeItem('dr_resume_refresh_token');
     window.location.href = 'us10_login.html';
 }
 
