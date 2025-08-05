@@ -12,12 +12,17 @@ import os
 import sys
 
 def create_app():
+
+    # Create Flask app (only once!)
+    app = Flask(__name__,
+                template_folder='../frontend',
+                static_folder='../frontend/static')
+
     # US-10: Add all main frontend HTML routes
     @app.route('/history')
     def serve_history():
         return render_template('us10_history.html')
 
-    # Add more routes here if you have more HTML files (e.g., /settings, /profile, etc.)
     @app.route('/login')
     def serve_login():
         return render_template('us10_login.html')
@@ -33,11 +38,6 @@ def create_app():
     @app.route('/account')
     def serve_account():
         return render_template('us10_account.html')
-
-    # Create Flask app (only once!)
-    app = Flask(__name__,
-                template_folder='../frontend',
-                static_folder='../frontend/static')
 
     # Serve landing page
     @app.route('/')
