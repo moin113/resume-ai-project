@@ -1,4 +1,7 @@
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, create_access_token
+from backend.models import db, User
+import re
 
 # Create blueprint for authentication routes (move above refresh endpoint)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')

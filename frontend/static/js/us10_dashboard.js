@@ -1,6 +1,6 @@
 // --- JWT Token Refresh Helpers ---
 async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem('dr_resume_refresh_token');
+    const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return null;
     try {
         const response = await fetch('/api/refresh', {
@@ -21,12 +21,11 @@ async function refreshAccessToken() {
 }
 
 async function fetchWithAuthRetry(url, options = {}, retry = true) {
-    let token = localStorage.getItem('dr_resume_token');
+    let token = localStorage.getItem('access_token');
     options.headers = options.headers || {};
     options.headers['Authorization'] = `Bearer ${token}`;
 
     let response = await fetch(url, options);
-
     if (response.status === 401 && retry) {
         // Try to refresh the token
         const newToken = await refreshAccessToken();
@@ -35,8 +34,8 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
             response = await fetch(url, options);
         } else {
             // Refresh failed, log out
-            localStorage.removeItem('dr_resume_token');
-            localStorage.removeItem('dr_resume_refresh_token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
             window.location.href = '/login';
             return null;
         }

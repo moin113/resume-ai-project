@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🩺 Dr. Resume Login Page Loaded (US-04)');
     
-    const token = localStorage.getItem('dr_resume_token');
+    const token = localStorage.getItem('access_token');
     if (token) {
         verifyTokenAndRedirect();
         return;
@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 showAlert('success', result.message);
                 
-                localStorage.setItem('dr_resume_token', result.tokens.access_token);
-                localStorage.setItem('dr_resume_refresh_token', result.tokens.refresh_token);
-                localStorage.setItem('dr_resume_user', JSON.stringify(result.user));
+                localStorage.setItem('access_token', result.tokens.access_token);
+                localStorage.setItem('refresh_token', result.tokens.refresh_token);
+                localStorage.setItem('user', JSON.stringify(result.user));
                 
                 console.log('✅ Login successful, token saved');
                 
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function verifyTokenAndRedirect() {
     try {
-        const token = localStorage.getItem('dr_resume_token');
+        const token = localStorage.getItem('access_token');
         
         const response = await fetch('/api/profile', {
             method: 'GET',
@@ -76,22 +76,21 @@ async function verifyTokenAndRedirect() {
                 'Content-Type': 'application/json'
             }
         });
-        
         if (response.ok) {
             console.log('✅ Valid token found, redirecting to dashboard');
             window.location.href = '/dashboard';
         } else {
             console.log('❌ Invalid token, clearing storage');
-            localStorage.removeItem('dr_resume_token');
-            localStorage.removeItem('dr_resume_refresh_token');
-            localStorage.removeItem('dr_resume_user');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
         }
         
     } catch (error) {
         console.error('Token verification error:', error);
-        localStorage.removeItem('dr_resume_token');
-        localStorage.removeItem('dr_resume_refresh_token');
-        localStorage.removeItem('dr_resume_user');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
     }
 }
 
