@@ -27,7 +27,7 @@ async function checkAuthentication() {
     
     try {
         // Verify token by calling protected endpoint
-        const response = await fetch('/api/profile', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/profile', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -61,7 +61,7 @@ async function loadUserInfo() {
     const token = localStorage.getItem('access_token');
     
     try {
-        const response = await fetch('/api/profile', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/profile', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -85,7 +85,7 @@ async function loadAccountInfo() {
     const token = localStorage.getItem('access_token');
     
     try {
-        const response = await fetch('/api/account_info', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/account_info', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -154,7 +154,7 @@ async function handlePersonalInfoUpdate(event) {
     const token = localStorage.getItem('access_token');
     
     try {
-        const response = await fetch('/api/update_account', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/update_account', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -196,7 +196,7 @@ async function handlePasswordChange(event) {
     const token = localStorage.getItem('access_token');
     
     try {
-        const response = await fetch('/api/change_password', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/change_password', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -256,7 +256,7 @@ async function deleteAccount() {
     const token = localStorage.getItem('access_token');
     
     try {
-        const response = await fetch('/api/delete_account', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/delete_account', {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,

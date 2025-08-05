@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setLoading(true);
         
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('https://resume-doctor-ai.onrender.com/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -69,7 +69,7 @@ async function verifyTokenAndRedirect() {
     try {
         const token = localStorage.getItem('access_token');
         console.log('DEBUG: Token before /api/profile:', token);
-        const response = await fetch('/api/profile', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/profile', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

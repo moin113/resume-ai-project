@@ -3,7 +3,7 @@ async function refreshAccessToken() {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return null;
     try {
-        const response = await fetch('/api/refresh', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/refresh', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`
@@ -305,7 +305,7 @@ async function generateBasicSuggestions() {
         await calculateAndDisplayMatchingScore(selectedResumeId, jobId);
 
         const token = localStorage.getItem('dr_resume_token');
-        const response = await fetch('/api/basic_suggestions', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/basic_suggestions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -361,7 +361,7 @@ async function generatePremiumSuggestions() {
         await calculateAndDisplayMatchingScore(selectedResumeId, jobId);
 
         const token = localStorage.getItem('dr_resume_token');
-        const response = await fetch('/api/premium_suggestions', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/premium_suggestions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -401,7 +401,7 @@ async function generatePremiumSuggestions() {
 async function saveJobDescription(jobText) {
     try {
         const token = localStorage.getItem('dr_resume_token');
-        const response = await fetch('/api/upload_jd', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/upload_jd', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -434,7 +434,7 @@ async function saveJobDescription(jobText) {
 async function calculateAndDisplayMatchingScore(resumeId, jobDescriptionId) {
     try {
         const token = localStorage.getItem('dr_resume_token');
-        const response = await fetch('/api/calculate_match', {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/calculate_match', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -704,7 +704,7 @@ async function loadDropdownData() {
         const token = localStorage.getItem('dr_resume_token');
 
         // Load resumes
-        const resumeResponse = await fetch('/api/resumes', {
+        const resumeResponse = await fetch('https://resume-doctor-ai.onrender.com/api/resumes', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -721,7 +721,7 @@ async function loadDropdownData() {
         }
 
         // Load job descriptions
-        const jdResponse = await fetch('/api/job_descriptions', {
+        const jdResponse = await fetch('https://resume-doctor-ai.onrender.com/api/job_descriptions', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1358,7 +1358,7 @@ async function logout() {
         const token = localStorage.getItem('dr_resume_token');
         
         if (token) {
-            await fetch('/api/logout', {
+            await fetch('https://resume-doctor-ai.onrender.com/api/logout', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
