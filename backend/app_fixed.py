@@ -27,9 +27,9 @@ def create_app():
     db_path = os.path.join(project_root, 'database', 'dr_resume_dev.db')
     upload_path = os.path.join(project_root, 'uploads')
 
-    app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-    app.config['JWT_SECRET_KEY'] = 'jwt-secret-key-change-in-production'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = upload_path
     app.config['RESUME_UPLOAD_FOLDER'] = upload_path
