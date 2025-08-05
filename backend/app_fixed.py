@@ -65,7 +65,8 @@ def create_app():
     CORS(app, origins=[
         'http://localhost:5000',
         'http://127.0.0.1:5000',
-        'https://resume-doctor-ai.onrender.com'
+        'https://resume-doctor-ai.onrender.com',
+        'https://resume-doctor-ai-frontend.onrender.com'
     ], supports_credentials=True, allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"]) 
     jwt = JWTManager(app)
 
