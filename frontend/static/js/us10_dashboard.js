@@ -1,3 +1,48 @@
+// --- JWT Token Refresh Helpers ---
+async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('dr_resume_refresh_token');
+    if (!refreshToken) return null;
+    try {
+        const response = await fetch('/api/refresh', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${refreshToken}`
+            }
+        });
+        const data = await response.json();
+        if (response.ok && data.success && data.access_token) {
+            localStorage.setItem('dr_resume_token', data.access_token);
+            return data.access_token;
+        }
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+    }
+    return null;
+}
+
+async function fetchWithAuthRetry(url, options = {}, retry = true) {
+    let token = localStorage.getItem('dr_resume_token');
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = `Bearer ${token}`;
+
+    let response = await fetch(url, options);
+
+    if (response.status === 401 && retry) {
+        // Try to refresh the token
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+            options.headers['Authorization'] = `Bearer ${newToken}`;
+            response = await fetch(url, options);
+        } else {
+            // Refresh failed, log out
+            localStorage.removeItem('dr_resume_token');
+            localStorage.removeItem('dr_resume_refresh_token');
+            window.location.href = '/login';
+            return null;
+        }
+    }
+    return response;
+}
 // Resume Doctor.Ai US-10 Dashboard JavaScript with Scan History
 
 // Global variables for pagination
@@ -118,12 +163,8 @@ async function handleResumeFile(file) {
     try {
         showLoading(true);
 
-        const token = localStorage.getItem('dr_resume_token');
-        const response = await fetch('/api/upload_resume', {
+        const response = await fetchWithAuthRetry('/api/upload_resume', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
             body: formData
         });
 
@@ -1044,46 +1085,30 @@ function createSuggestionHTML(suggestion, isPremium) {
 
 async function checkAuthentication() {
     const token = localStorage.getItem('dr_resume_token');
-    
     if (!token) {
         console.log('❌ No token found, redirecting to login');
         window.location.href = '/login';
         return;
     }
-    
     try {
-        // Verify token by calling protected endpoint
-        const response = await fetch('/api/profile', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
+        // Use fetchWithAuthRetry for protected endpoint
+        const response = await fetchWithAuthRetry('/api/profile', { method: 'GET' });
+        if (!response || !response.ok) {
             throw new Error('Token verification failed');
         }
-        
         const result = await response.json();
-        
         if (!result.success) {
             throw new Error('Invalid token response');
         }
-        
         console.log('✅ Token verified successfully');
-        
         // Update user info in localStorage if needed
         localStorage.setItem('dr_resume_user', JSON.stringify(result.user));
-        
     } catch (error) {
         console.error('Authentication error:', error);
-        
         // Clear invalid tokens and redirect
         localStorage.removeItem('dr_resume_token');
         localStorage.removeItem('dr_resume_refresh_token');
         localStorage.removeItem('dr_resume_user');
-        
         alert('Your session has expired. Please log in again.');
         window.location.href = '/login';
     }
@@ -1125,22 +1150,11 @@ function loadUserInfo() {
 
 async function loadUserJobDescriptions() {
     try {
-        const token = localStorage.getItem('dr_resume_token');
-        
-        const response = await fetch('/api/job_descriptions', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
+        const response = await fetchWithAuthRetry('/api/job_descriptions', { method: 'GET' });
+        if (!response || !response.ok) {
             throw new Error('Failed to fetch job descriptions');
         }
-        
         const result = await response.json();
-        
         if (result.success) {
             displayJobDescriptions(result.job_descriptions);
             updateJDStats(result.count);
@@ -1373,22 +1387,11 @@ async function logout() {
 
 async function loadUserResumes() {
     try {
-        const token = localStorage.getItem('dr_resume_token');
-
-        const response = await fetch('/api/resumes', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
+        const response = await fetchWithAuthRetry('/api/resumes', { method: 'GET' });
+        if (!response || !response.ok) {
             throw new Error('Failed to fetch resumes');
         }
-
         const result = await response.json();
-
         if (result.success) {
             displayResumes(result.resumes);
             updateResumeStats(result.count);
@@ -1659,13 +1662,7 @@ async function loadDashboardStats() {
     }
 
     try {
-        const response = await fetch('/api/dashboard_stats', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetchWithAuthRetry('/api/dashboard_stats', { method: 'GET' });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
