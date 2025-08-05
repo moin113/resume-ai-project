@@ -12,6 +12,12 @@ import os
 import sys
 
 def create_app():
+    # Catch-all route for SPA client-side routing
+    @app.route('/<path:path>')
+    def catch_all(path):
+        if path.startswith('api') or path.startswith('static'):
+            return "Not Found", 404
+        return render_template('us10_landing.html')
     """Create and configure the Flask application"""
     print("🏗️ Creating Dr. Resume Flask App...")
 
