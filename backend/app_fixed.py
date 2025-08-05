@@ -13,11 +13,18 @@ import sys
 
 
 def create_app():
+
+    """Create and configure the Flask application"""
+    print("🏗️ Creating Dr. Resume Flask App...")
+
+    # Create Flask app
+    app = Flask(__name__,
+                template_folder='../frontend',
+                static_folder='../frontend/static')
+
     @app.route('/')
     def serve_frontend():
         return render_template('us10_landing.html')
-    """Create and configure the Flask application"""
-    print("🏗️ Creating Dr. Resume Flask App...")
 
     # Create Flask app
     app = Flask(__name__,
