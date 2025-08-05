@@ -42,7 +42,7 @@ def create_app():
     # Serve landing page
     @app.route('/')
     def serve_frontend():
-        return render_template('us10_landing.html')
+        return render_template('index.html')
 
     # Basic configuration
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -62,7 +62,11 @@ def create_app():
     os.makedirs(upload_path, exist_ok=True)
 
     # Initialize extensions
-    CORS(app, origins=['http://localhost:5000', 'http://127.0.0.1:5000'])
+    CORS(app, origins=[
+        'http://localhost:5000',
+        'http://127.0.0.1:5000',
+        'https://resume-doctor-ai.onrender.com'
+    ], supports_credentials=True, allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"]) 
     jwt = JWTManager(app)
 
     # JWT error handlers
