@@ -13,6 +13,9 @@ import sys
 
 
 def create_app():
+    @app.route('/')
+    def serve_frontend():
+        return render_template('us10_landing.html')
     """Create and configure the Flask application"""
     print("🏗️ Creating Dr. Resume Flask App...")
 
