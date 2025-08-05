@@ -1109,7 +1109,7 @@ async function checkAuthentication() {
         localStorage.removeItem('dr_resume_refresh_token');
         localStorage.removeItem('dr_resume_user');
         alert('Your session has expired. Please log in again.');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
     }
 }
 

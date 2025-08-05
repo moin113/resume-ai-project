@@ -53,7 +53,7 @@ async function checkAuthentication() {
         console.error('❌ Authentication failed:', error);
         localStorage.removeItem('dr_resume_token');
         localStorage.removeItem('dr_resume_refresh_token');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
     }
 }
 
