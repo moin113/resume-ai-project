@@ -52,7 +52,7 @@ def test_app_creation():
         print("✅ JWT initialized")
         
         print("7. Testing database import...")
-        from models import db
+        from backend.models import db
         print("✅ Database models imported")
         
         print("8. Initializing database...")
@@ -69,7 +69,7 @@ def test_app_creation():
         
         print("11. Testing app context...")
         with app.app_context():
-            from models import User
+            from backend.models import User
             users = User.query.all()
             print(f"✅ App context works, found {len(users)} users")
         

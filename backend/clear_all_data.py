@@ -1,4 +1,4 @@
-from models import db, User, Resume, JobDescription, MatchScore
+from backend.models import db, User, Resume, JobDescription, MatchScore
 from sqlalchemy import text
 from flask import Flask
 import os

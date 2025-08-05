@@ -18,7 +18,7 @@ def test_imports():
         print("✅ Flask imports successful")
         
         print("2. Testing models import...")
-        from models import db
+        from backend.models import db
         print("✅ Models import successful")
         
         print("3. Testing route imports...")

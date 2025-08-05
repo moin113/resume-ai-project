@@ -8,7 +8,7 @@ No hardcoded suggestions - everything is based on real keyword comparison and NL
 import json
 import re
 from typing import Dict, List, Set, Tuple
-from models import Resume, JobDescription
+from backend.models import Resume, JobDescription
 from services.matching_service import MatchingService
 
 class DynamicSuggestionsService:

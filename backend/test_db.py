@@ -67,7 +67,7 @@ def test_flask_models():
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         
         # Import models
-        from models import db, User
+        from backend.models import db, User
         
         # Initialize database
         db.init_app(app)

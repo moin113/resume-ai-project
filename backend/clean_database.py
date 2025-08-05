@@ -6,7 +6,7 @@ Clean all data from the database and start fresh
 import os
 import sqlite3
 from flask import Flask
-from models import db
+from backend.models import db
 
 def clean_database():
     """Clean all data from the database"""
@@ -89,7 +89,7 @@ def verify_clean_database():
     db.init_app(app)
     
     with app.app_context():
-        from models import User, Resume, JobDescription, MatchScore, Suggestion
+        from backend.models import User, Resume, JobDescription, MatchScore, Suggestion
         
         # Count records in each table
         users = User.query.count()

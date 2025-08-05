@@ -17,7 +17,7 @@ def init_database():
         app = create_app()
         
         with app.app_context():
-            from models import db, User, Resume, JobDescription, MatchScore, Suggestion
+            from backend.models import db, User, Resume, JobDescription, MatchScore, Suggestion
             
             # Create all tables
             print("📊 Creating database tables...")
