@@ -12,6 +12,27 @@ import os
 import sys
 
 def create_app():
+    # US-10: Add all main frontend HTML routes
+    @app.route('/history')
+    def serve_history():
+        return render_template('us10_history.html')
+
+    # Add more routes here if you have more HTML files (e.g., /settings, /profile, etc.)
+    @app.route('/login')
+    def serve_login():
+        return render_template('us10_login.html')
+
+    @app.route('/register')
+    def serve_register():
+        return render_template('us10_register.html')
+
+    @app.route('/dashboard')
+    def serve_dashboard():
+        return render_template('us10_dashboard.html')
+
+    @app.route('/account')
+    def serve_account():
+        return render_template('us10_account.html')
 
     # Create Flask app (only once!)
     app = Flask(__name__,
@@ -21,13 +42,6 @@ def create_app():
     # Serve landing page
     @app.route('/')
     def serve_frontend():
-        return render_template('us10_landing.html')
-
-    # Catch-all route for SPA client-side routing
-    @app.route('/<path:path>')
-    def catch_all(path):
-        if path.startswith('api') or path.startswith('static'):
-            return "Not Found", 404
         return render_template('us10_landing.html')
 
     # Basic configuration
