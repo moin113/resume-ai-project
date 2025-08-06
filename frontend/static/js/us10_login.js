@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                credentials: 'include' // Include credentials for CORS
             });
             
             const result = await response.json();
@@ -74,7 +75,8 @@ async function verifyTokenAndRedirect() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Include credentials for CORS
         });
         if (response.ok) {
             console.log('✅ Valid token found, redirecting to dashboard');

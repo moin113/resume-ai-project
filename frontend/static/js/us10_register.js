@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`${API_BASE_URL}/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                credentials: 'include' // Include credentials for CORS
             });
             
             const result = await response.json();
@@ -115,7 +116,8 @@ async function checkEmailExists(email) {
         const response = await fetch(`${API_BASE_URL}/api/check-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email }),
+            credentials: 'include' // Include credentials for CORS
         });
         
         const result = await response.json();

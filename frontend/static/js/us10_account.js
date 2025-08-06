@@ -32,7 +32,8 @@ async function checkAuthentication() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Include credentials for CORS
         });
         if (!response.ok) {
             if (response.status === 401) {
@@ -66,7 +67,8 @@ async function loadUserInfo() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Include credentials for CORS
         });
         
         if (response.ok) {
@@ -90,7 +92,8 @@ async function loadAccountInfo() {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            }
+            },
+            credentials: 'include' // Include credentials for CORS
         });
         
         if (response.ok) {
@@ -160,7 +163,8 @@ async function handlePersonalInfoUpdate(event) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: 'include' // Include credentials for CORS
         });
         
         const result = await response.json();
@@ -202,7 +206,8 @@ async function handlePasswordChange(event) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: 'include' // Include credentials for CORS
         });
         
         const result = await response.json();
@@ -265,7 +270,8 @@ async function deleteAccount() {
             body: JSON.stringify({
                 password: password,
                 confirm_deletion: confirmDeletion
-            })
+            }),
+            credentials: 'include' // Include credentials for CORS
         });
         
         const result = await response.json();
