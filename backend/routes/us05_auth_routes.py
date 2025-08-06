@@ -6,7 +6,7 @@ import re
 # Create blueprint for authentication routes (move above refresh endpoint)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 # Refresh access token endpoint
-@auth_bp.route('/refresh', methods=['POST'])
+@auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 @jwt_required(refresh=True)
 def refresh():
     """Refresh access token using refresh token"""

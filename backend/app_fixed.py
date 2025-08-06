@@ -67,7 +67,7 @@ def create_app():
         'http://127.0.0.1:5000',
         'https://resume-doctor-ai-frontend.onrender.com',
         'https://resume-doctor-ai.onrender.com'
-    ], supports_credentials=True, allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"])
+    ], methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], supports_credentials=True, allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"])
     jwt = JWTManager(app)
 
     # JWT error handlers
