@@ -79,6 +79,29 @@ def create_app():
     def invalid_token_callback(error):
         return jsonify({'success': False, 'message': 'Invalid token', 'error': 'invalid_token'}), 401
 
+    # JWT refresh endpoint
+    from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
+
+    @app.route('/api/refresh', methods=['POST'])
+    @jwt_required(refresh=True)
+    def refresh():
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user)
+        return jsonify({
+            'success': True,
+            'access_token': new_access_token
+        }), 200
+
+    # Explicit OPTIONS handler for CORS preflight on /api/refresh
+    @app.route('/api/refresh', methods=['OPTIONS'])
+    def refresh_options():
+        response = jsonify({'success': True})
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response, 200
+
     # Initialize database
     try:
         from backend import models
@@ -124,6 +147,20 @@ def create_app():
             return jsonify({'success': False, 'message': str(e)}), 500
 
     print("✅ Flask app created successfully")
+
+    # Add security and cache-control headers to all responses
+    @app.after_request
+    def add_security_headers(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,Accept'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+        return response
+
     return app
 
 def main():
