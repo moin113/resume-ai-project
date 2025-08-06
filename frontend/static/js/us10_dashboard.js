@@ -3,11 +3,12 @@ async function refreshAccessToken() {
     const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) return null;
     try {
-        const response = await fetch('https://resume-doctor-ai.onrender.com/api/refresh', {
+        const response = await fetch(`${API_BASE_URL}/api/refresh`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`
-            }
+            },
+            credentials: 'include' // Include credentials for CORS
         });
         const data = await response.json();
         if (response.ok && data.success && data.access_token) {
@@ -24,6 +25,7 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
     let token = localStorage.getItem('access_token');
     options.headers = options.headers || {};
     options.headers['Authorization'] = `Bearer ${token}`;
+    options.credentials = 'include'; // Include credentials for CORS
 
     // Always use full backend URL for static hosting
     const backendBase = API_BASE_URL;
