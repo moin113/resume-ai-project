@@ -25,13 +25,16 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
     options.headers = options.headers || {};
     options.headers['Authorization'] = `Bearer ${token}`;
 
-    let response = await fetch(url, options);
+    // Always use full backend URL for static hosting
+    const backendBase = 'https://resume-doctor-ai.onrender.com';
+    let fullUrl = url.startsWith('http') ? url : backendBase + url;
+    let response = await fetch(fullUrl, options);
     if (response.status === 401 && retry) {
         // Try to refresh the token
         const newToken = await refreshAccessToken();
         if (newToken) {
             options.headers['Authorization'] = `Bearer ${newToken}`;
-            response = await fetch(url, options);
+            response = await fetch(fullUrl, options);
         } else {
             // Refresh failed, log out
             localStorage.removeItem('access_token');
@@ -1229,7 +1232,7 @@ async function viewJobDescription(jdId) {
     try {
         const token = localStorage.getItem('dr_resume_token');
         
-        const response = await fetch(`/api/job_descriptions/${jdId}`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/job_descriptions/' + jdId, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1263,7 +1266,7 @@ async function deleteJobDescription(jdId, jdTitle) {
     try {
         const token = localStorage.getItem('dr_resume_token');
         
-        const response = await fetch(`/api/job_descriptions/${jdId}`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/job_descriptions/' + jdId, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1463,7 +1466,7 @@ async function viewResume(resumeId) {
     try {
         const token = localStorage.getItem('dr_resume_token');
 
-        const response = await fetch(`/api/resumes/${resumeId}`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/resumes/' + resumeId, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1497,7 +1500,7 @@ async function deleteResume(resumeId, resumeTitle) {
     try {
         const token = localStorage.getItem('dr_resume_token');
 
-        const response = await fetch(`/api/resumes/${resumeId}`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/resumes/' + resumeId, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1625,7 +1628,7 @@ async function loadScanHistory(page = 1, filter = '') {
             params.append('filter_score', filter);
         }
 
-        const response = await fetch(`/api/history?${params}`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/history?' + params, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
