@@ -13,12 +13,12 @@ def refresh():
     """Refresh access token using refresh token"""
     try:
         current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        user = User.query.get(int(current_user_id))  # Convert string back to int
         if not user or not user.is_active:
             return jsonify({'success': False, 'message': 'User not found or inactive'}), 404
         # Create a new access token
         access_token = create_access_token(
-            identity=user.id,
+            identity=str(user.id),  # Convert to string for consistency
             additional_claims={
                 'email': user.email,
                 'first_name': user.first_name,
@@ -150,7 +150,7 @@ def get_profile():
     try:
         # Get current user from JWT
         current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        user = User.query.get(int(current_user_id))  # Convert string back to int
         if not user or not user.is_active:
             return jsonify({'success': False, 'message': 'User not found or inactive'}), 401
         return jsonify({'success': True, 'user': user.to_dict()}), 200

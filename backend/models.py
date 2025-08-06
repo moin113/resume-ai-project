@@ -8,6 +8,17 @@ import json
 
 db = SQLAlchemy()
 
+def get_current_user_id():
+    """Helper function to get current user ID as integer from JWT"""
+    from flask_jwt_extended import get_jwt_identity
+    user_id_str = get_jwt_identity()
+    return int(user_id_str) if user_id_str else None
+
+def get_current_user():
+    """Helper function to get current user object from JWT"""
+    user_id = get_current_user_id()
+    return User.query.get(user_id) if user_id else None
+
 class User(db.Model):
     __tablename__ = 'users'
     
@@ -50,7 +61,7 @@ class User(db.Model):
         from datetime import timedelta
 
         access_token = create_access_token(
-            identity=self.id,
+            identity=str(self.id),  # Convert to string for consistency
             additional_claims={
                 'email': self.email,
                 'first_name': self.first_name,
@@ -60,7 +71,7 @@ class User(db.Model):
             expires_delta=timedelta(hours=1)  # 1 hour expiry
         )
         refresh_token = create_refresh_token(
-            identity=self.id,
+            identity=str(self.id),  # Convert to string for consistency
             expires_delta=timedelta(days=7)  # 7 days expiry
         )
 

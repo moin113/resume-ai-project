@@ -210,7 +210,7 @@ def create_app():
         try:
             # Generate a test token
             test_token = create_access_token(
-                identity=999,
+                identity=str(999),  # Convert to string
                 additional_claims={'test': 'value'}
             )
 
