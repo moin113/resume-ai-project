@@ -10,6 +10,10 @@ from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from datetime import datetime
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def create_app():
 
@@ -67,9 +71,17 @@ def create_app():
     db_path = os.path.join(project_root, 'database', 'dr_resume_dev.db')
     upload_path = os.path.join(project_root, 'uploads')
 
-    # Get environment variables
+    # Get environment variables with explicit debugging
     secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
     jwt_secret_key = os.getenv('JWT_SECRET_KEY', secret_key)  # Use same secret as fallback
+
+    # Force both to be the same to ensure JWT works
+    if secret_key != jwt_secret_key:
+        print(f"⚠️  WARNING: SECRET_KEY and JWT_SECRET_KEY don't match!")
+        print(f"   SECRET_KEY: {secret_key[:10]}...")
+        print(f"   JWT_SECRET_KEY: {jwt_secret_key[:10]}...")
+        print(f"   🔧 Forcing JWT_SECRET_KEY to match SECRET_KEY")
+        jwt_secret_key = secret_key
 
     # Ensure both secrets are the same for JWT to work properly
     app.config['SECRET_KEY'] = secret_key
@@ -79,6 +91,8 @@ def create_app():
     print(f"🔑 SECRET_KEY (first 10 chars): {secret_key[:10]}...")
     print(f"🔑 JWT_SECRET_KEY (first 10 chars): {jwt_secret_key[:10]}...")
     print(f"🔑 Keys match: {secret_key == jwt_secret_key}")
+    print(f"🔑 Environment JWT_SECRET_KEY: {os.getenv('JWT_SECRET_KEY', 'NOT_SET')[:10]}...")
+    print(f"🔑 Environment SECRET_KEY: {os.getenv('SECRET_KEY', 'NOT_SET')[:10]}...")
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = upload_path
