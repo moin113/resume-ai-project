@@ -202,6 +202,37 @@ def create_app():
             'env_jwt_secret_key': os.getenv('JWT_SECRET_KEY', 'NOT_SET')[:10],
         })
 
+    # Test JWT generation and verification in same request
+    @app.route('/api/debug/jwt-test', methods=['GET'])
+    def debug_jwt_test():
+        """Test JWT generation and verification"""
+        from flask_jwt_extended import create_access_token, decode_token
+        try:
+            # Generate a test token
+            test_token = create_access_token(
+                identity=999,
+                additional_claims={'test': 'value'}
+            )
+
+            # Try to decode it immediately
+            decoded = decode_token(test_token)
+
+            return jsonify({
+                'success': True,
+                'token_generated': True,
+                'token_length': len(test_token),
+                'token_decoded': True,
+                'decoded_sub': decoded.get('sub'),
+                'decoded_test': decoded.get('test'),
+                'jwt_secret_used': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'jwt_secret_used': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]
+            })
+
     print("✅ Flask app created successfully")
 
     # Add security and cache-control headers to all responses
