@@ -51,7 +51,7 @@ def create_app():
     upload_path = os.path.join(project_root, 'uploads')
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret')
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-for-testing-only')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = upload_path
@@ -71,12 +71,18 @@ def create_app():
     jwt = JWTManager(app)
 
     # JWT error handlers
+    import logging
+    logger = logging.getLogger("jwt_errors")
+    logging.basicConfig(level=logging.INFO)
+
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
+        logger.warning(f"JWT expired: header={jwt_header}, payload={jwt_payload}")
         return jsonify({'success': False, 'message': 'Token has expired', 'error': 'token_expired'}), 401
 
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
+        logger.warning(f"JWT invalid: error={error}")
         return jsonify({'success': False, 'message': 'Invalid token', 'error': 'invalid_token'}), 401
 
     # JWT refresh endpoint
@@ -85,8 +91,12 @@ def create_app():
     @app.route('/api/refresh', methods=['POST'])
     @jwt_required(refresh=True)
     def refresh():
-        current_user = get_jwt_identity()
-        new_access_token = create_access_token(identity=current_user)
+        from backend.models import User
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if not user or not user.is_active:
+            return jsonify({'success': False, 'message': 'User not found or inactive'}), 404
+        new_access_token = create_access_token(identity=user.id)
         return jsonify({
             'success': True,
             'access_token': new_access_token

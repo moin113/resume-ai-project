@@ -13,8 +13,8 @@ def refresh():
     try:
         current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
-        if not user:
-            return jsonify({'success': False, 'message': 'User not found'}), 404
+        if not user or not user.is_active:
+            return jsonify({'success': False, 'message': 'User not found or inactive'}), 404
         # Create a new access token
         access_token = create_access_token(
             identity=user.id,
@@ -157,10 +157,8 @@ def get_profile():
         # Get current user from JWT
         current_user_id = get_jwt_identity()
         user = User.query.get(current_user_id)
-        
-        if not user:
-            return jsonify({'success': False, 'message': 'User not found'}), 404
-        
+        if not user or not user.is_active:
+            return jsonify({'success': False, 'message': 'User not found or inactive'}), 401
         return jsonify({'success': True, 'user': user.to_dict()}), 200
         
     except Exception as e:
