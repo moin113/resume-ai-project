@@ -44,6 +44,23 @@ def create_app():
     def serve_frontend():
         return render_template('index.html')
 
+    # Add direct HTML file routes for compatibility
+    @app.route('/us10_login.html')
+    def serve_login_html():
+        return render_template('us10_login.html')
+
+    @app.route('/us10_register.html')
+    def serve_register_html():
+        return render_template('us10_register.html')
+
+    @app.route('/us10_dashboard.html')
+    def serve_dashboard_html():
+        return render_template('us10_dashboard.html')
+
+    @app.route('/us10_account.html')
+    def serve_account_html():
+        return render_template('us10_account.html')
+
     # Basic configuration
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
@@ -57,6 +74,11 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = upload_path
     app.config['RESUME_UPLOAD_FOLDER'] = upload_path
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+
+    # JWT Configuration
+    from datetime import timedelta
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # 1 hour
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=7)  # 7 days
 
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     os.makedirs(upload_path, exist_ok=True)
@@ -85,32 +107,17 @@ def create_app():
         logger.warning(f"JWT invalid: error={error}")
         return jsonify({'success': False, 'message': 'Invalid token', 'error': 'invalid_token'}), 401
 
-    # JWT refresh endpoint
-    from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
+    @jwt.unauthorized_loader
+    def missing_token_callback(error):
+        logger.warning(f"JWT missing: error={error}")
+        return jsonify({'success': False, 'message': 'Authorization token required', 'error': 'missing_token'}), 401
 
-    @app.route('/api/refresh', methods=['POST'])
-    @jwt_required(refresh=True)
-    def refresh():
-        from backend.models import User
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
-        if not user or not user.is_active:
-            return jsonify({'success': False, 'message': 'User not found or inactive'}), 404
-        new_access_token = create_access_token(identity=user.id)
-        return jsonify({
-            'success': True,
-            'access_token': new_access_token
-        }), 200
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        logger.warning(f"JWT revoked: header={jwt_header}, payload={jwt_payload}")
+        return jsonify({'success': False, 'message': 'Token has been revoked', 'error': 'token_revoked'}), 401
 
-    # Explicit OPTIONS handler for CORS preflight on /api/refresh
-    @app.route('/api/refresh', methods=['OPTIONS'])
-    def refresh_options():
-        response = jsonify({'success': True})
-        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,Accept')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response, 200
+    # JWT refresh endpoint is now handled in auth_routes.py
 
     # Initialize database
     try:

@@ -21,7 +21,7 @@ async function checkAuthentication() {
     
     if (!token) {
         console.log('❌ No token found, redirecting to login');
-        window.location.href = 'us10_login.html';
+        window.location.href = '/login';
         return;
     }
     
@@ -40,7 +40,7 @@ async function checkAuthentication() {
                 alert('Session expired. Please log in again.');
                 localStorage.removeItem('dr_resume_token');
                 localStorage.removeItem('dr_resume_refresh_token');
-                window.location.href = 'us10_login.html';
+                window.location.href = '/login';
                 return;
             }
             throw new Error('Token verification failed');
@@ -54,7 +54,7 @@ async function checkAuthentication() {
         console.error('❌ Authentication failed:', error);
         localStorage.removeItem('dr_resume_token');
         localStorage.removeItem('dr_resume_refresh_token');
-        window.location.href = 'us10_login.html';
+        window.location.href = '/login';
     }
 }
 
@@ -298,7 +298,7 @@ function upgradeToPremium() {
 function logout() {
     localStorage.removeItem('dr_resume_token');
     localStorage.removeItem('dr_resume_refresh_token');
-    window.location.href = 'us10_login.html';
+    window.location.href = '/login';
 }
 
 function showAlert(message, type = 'info') {

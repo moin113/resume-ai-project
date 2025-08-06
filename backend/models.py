@@ -47,6 +47,8 @@ class User(db.Model):
     
     def generate_tokens(self):
         """Generate JWT access and refresh tokens"""
+        from datetime import timedelta
+
         access_token = create_access_token(
             identity=self.id,
             additional_claims={
@@ -54,15 +56,19 @@ class User(db.Model):
                 'first_name': self.first_name,
                 'last_name': self.last_name,
                 'role': self.role
-            }
+            },
+            expires_delta=timedelta(hours=1)  # 1 hour expiry
         )
-        refresh_token = create_refresh_token(identity=self.id)
-        
+        refresh_token = create_refresh_token(
+            identity=self.id,
+            expires_delta=timedelta(days=7)  # 7 days expiry
+        )
+
         return {
             'access_token': access_token,
             'refresh_token': refresh_token,
             'token_type': 'Bearer',
-            'expires_in': 86400
+            'expires_in': 3600  # 1 hour in seconds
         }
     
     @staticmethod

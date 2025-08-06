@@ -3,8 +3,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, create_a
 from backend.models import db, User
 import re
 
-# Create blueprint for authentication routes (move above refresh endpoint)
+# Create blueprint for authentication routes
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
+
 # Refresh access token endpoint
 @auth_bp.route('/refresh', methods=['POST', 'OPTIONS'])
 @jwt_required(refresh=True)
@@ -28,13 +29,6 @@ def refresh():
         return jsonify({'success': True, 'access_token': access_token}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': 'Token refresh failed', 'error': str(e)}), 500
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from backend.models import db, User
-import re
-
-# Create blueprint for authentication routes
-auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 
 @auth_bp.route('/register', methods=['POST'])
 def register():

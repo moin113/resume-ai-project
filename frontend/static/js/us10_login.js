@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log('✅ Login successful, token saved');
                 
-                setTimeout(() => { window.location.href = 'us10_dashboard.html'; }, 1000);
+                setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
                 
             } else {
                 showAlert('error', result.message);
@@ -80,7 +80,7 @@ async function verifyTokenAndRedirect() {
         });
         if (response.ok) {
             console.log('✅ Valid token found, redirecting to dashboard');
-            window.location.href = 'us10_dashboard.html';
+            window.location.href = '/dashboard';
         } else {
             console.log('❌ Invalid token, clearing storage');
             localStorage.removeItem('dr_resume_token');
