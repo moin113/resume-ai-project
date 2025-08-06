@@ -1,9 +1,9 @@
 // --- JWT Token Refresh Helpers ---
 async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = localStorage.getItem('dr_resume_refresh_token');
     if (!refreshToken) return null;
     try {
-        const response = await fetch(`${API_BASE_URL}/api/refresh`, {
+        const response = await fetch('https://resume-doctor-ai.onrender.com/api/refresh', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${refreshToken}`
@@ -22,14 +22,13 @@ async function refreshAccessToken() {
 }
 
 async function fetchWithAuthRetry(url, options = {}, retry = true) {
-    let token = localStorage.getItem('access_token');
+    let token = localStorage.getItem('dr_resume_token');
     options.headers = options.headers || {};
     options.headers['Authorization'] = `Bearer ${token}`;
     options.credentials = 'include'; // Include credentials for CORS
 
     // Always use full backend URL for static hosting
-    const backendBase = API_BASE_URL;
-    let fullUrl = url.startsWith('http') ? url : backendBase + url;
+    let fullUrl = url.startsWith('http') ? url : 'https://resume-doctor-ai.onrender.com' + url;
     let response = await fetch(fullUrl, options);
     if (response.status === 401 && retry) {
         // Try to refresh the token
@@ -39,8 +38,8 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
             response = await fetch(fullUrl, options);
         } else {
             // Refresh failed, log out
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('dr_resume_token');
+            localStorage.removeItem('dr_resume_refresh_token');
             window.location.href = 'us10_login.html';
             return null;
         }
@@ -1056,7 +1055,7 @@ function createSuggestionHTML(suggestion, isPremium) {
                         ${suggestion.keywords.map(keyword => `
                             <span style="
                                 background: #e0e7ff;
-                                color: #3730a3;
+                                color
                                 padding: 2px 6px;
                                 border-radius: 4px;
                                 font-size: 11px;
