@@ -1,7 +1,11 @@
 // --- JWT Token Refresh Helpers ---
 async function refreshAccessToken() {
     const refreshToken = localStorage.getItem('dr_resume_refresh_token');
-    if (!refreshToken) return null;
+    if (!refreshToken) {
+        console.warn('❌ No refresh token found.');
+        return null;
+    }
+
     try {
         const response = await fetch('https://resume-doctor-ai.onrender.com/api/refresh', {
             method: 'POST',
@@ -10,53 +14,68 @@ async function refreshAccessToken() {
             },
             credentials: 'include'
         });
+
         const data = await response.json();
+
         if (response.ok && data.success && data.access_token) {
             localStorage.setItem('dr_resume_token', data.access_token);
+            console.log('✅ Token refreshed successfully.');
             return data.access_token;
-        } else {
-            // If refresh fails, clear tokens and redirect to login
-            localStorage.removeItem('dr_resume_token');
-            localStorage.removeItem('dr_resume_refresh_token');
-            localStorage.removeItem('dr_resume_user');
-            window.location.href = 'us10_login.html';
-            return null;
         }
-    } catch (error) {
-        // On error, clear tokens and redirect
-        localStorage.removeItem('dr_resume_token');
-        localStorage.removeItem('dr_resume_refresh_token');
-        localStorage.removeItem('dr_resume_user');
-        window.location.href = 'us10_login.html';
+
+        console.error('❌ Refresh response invalid:', data);
+        return null;
+    } catch (err) {
+        console.error('❌ Refresh request failed:', err);
         return null;
     }
 }
 
 async function fetchWithAuthRetry(url, options = {}, retry = true) {
     let token = localStorage.getItem('dr_resume_token');
-    options.headers = options.headers || {};
-    options.headers['Authorization'] = `Bearer ${token}`;
-    options.credentials = 'include'; // Include credentials for CORS
+    if (!token) {
+        console.warn('❌ No access token — redirecting to login.');
+        redirectToLogin();
+        return null;
+    }
 
-    // Always use full backend URL for static hosting
-    let fullUrl = url.startsWith('http') ? url : 'https://resume-doctor-ai.onrender.com' + url;
+    options.headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`
+    };
+    options.credentials = 'include';
+
+    const fullUrl = url.startsWith('http') ? url : 'https://resume-doctor-ai.onrender.com' + url;
+
     let response = await fetch(fullUrl, options);
+
+    // Check for 401 and attempt refresh if allowed
     if (response.status === 401 && retry) {
-        // Try to refresh the token
+        console.warn('⚠️ Access token expired or invalid — attempting refresh...');
+
         const newToken = await refreshAccessToken();
-        if (newToken) {
-            options.headers['Authorization'] = `Bearer ${newToken}`;
-            response = await fetch(fullUrl, options);
-        } else {
-            // Refresh failed, log out
-            localStorage.removeItem('dr_resume_token');
-            localStorage.removeItem('dr_resume_refresh_token');
-            window.location.href = 'us10_login.html';
+
+        if (!newToken) {
+            console.error('❌ Refresh token failed or missing.');
+            redirectToLogin();
             return null;
         }
+
+        // Retry with new token
+        options.headers.Authorization = `Bearer ${newToken}`;
+        response = await fetch(fullUrl, options);
     }
+
     return response;
 }
+
+function redirectToLogin() {
+    localStorage.removeItem('dr_resume_token');
+    localStorage.removeItem('dr_resume_refresh_token');
+    localStorage.removeItem('dr_resume_user');
+    window.location.href = 'us10_login.html';
+}
+
 // Resume Doctor.Ai US-10 Dashboard JavaScript with Scan History
 
 // Global variables for pagination
@@ -1119,12 +1138,8 @@ async function checkAuthentication() {
         localStorage.setItem('dr_resume_user', JSON.stringify(result.user));
     } catch (error) {
         console.error('Authentication error:', error);
-        // Clear invalid tokens and redirect
-        localStorage.removeItem('dr_resume_token');
-        localStorage.removeItem('dr_resume_refresh_token');
-        localStorage.removeItem('dr_resume_user');
         alert('Your session has expired. Please log in again.');
-        window.location.href = 'us10_login.html';
+        redirectToLogin();
     }
 }
 
@@ -1371,7 +1386,6 @@ ${jd.job_text}
 async function logout() {
     try {
         const token = localStorage.getItem('dr_resume_token');
-        
         if (token) {
             await fetch('https://resume-doctor-ai.onrender.com/api/logout', {
                 method: 'POST',
@@ -1381,19 +1395,12 @@ async function logout() {
                 }
             });
         }
-        
     } catch (error) {
         console.error('Logout API error:', error);
     } finally {
-        // Clear all stored data
-        localStorage.removeItem('dr_resume_token');
-        localStorage.removeItem('dr_resume_refresh_token');
-        localStorage.removeItem('dr_resume_user');
-        
+        // Centralized logout
         console.log('🚪 Logged out successfully');
-        
-        // Redirect to landing page
-        window.location.href = '/';
+        redirectToLogin();
     }
 }
 
