@@ -8,17 +8,28 @@ async function refreshAccessToken() {
             headers: {
                 'Authorization': `Bearer ${refreshToken}`
             },
-            credentials: 'include' // Include credentials for CORS
+            credentials: 'include'
         });
         const data = await response.json();
         if (response.ok && data.success && data.access_token) {
             localStorage.setItem('dr_resume_token', data.access_token);
             return data.access_token;
+        } else {
+            // If refresh fails, clear tokens and redirect to login
+            localStorage.removeItem('dr_resume_token');
+            localStorage.removeItem('dr_resume_refresh_token');
+            localStorage.removeItem('dr_resume_user');
+            window.location.href = 'us10_login.html';
+            return null;
         }
     } catch (error) {
-        console.error('Token refresh failed:', error);
+        // On error, clear tokens and redirect
+        localStorage.removeItem('dr_resume_token');
+        localStorage.removeItem('dr_resume_refresh_token');
+        localStorage.removeItem('dr_resume_user');
+        window.location.href = 'us10_login.html';
+        return null;
     }
-    return null;
 }
 
 async function fetchWithAuthRetry(url, options = {}, retry = true) {
