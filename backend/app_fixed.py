@@ -12,8 +12,12 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (only if file exists)
+if os.path.exists('.env'):
+    load_dotenv()
+    print("🔧 Loaded .env file")
+else:
+    print("🔧 No .env file found, using environment variables")
 
 def create_app():
 
@@ -73,14 +77,11 @@ def create_app():
 
     # Get environment variables with explicit debugging
     secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
-    jwt_secret_key = os.getenv('JWT_SECRET_KEY', secret_key)  # Use same secret as fallback
+    jwt_secret_key = os.getenv('JWT_SECRET_KEY', None)
 
-    # Force both to be the same to ensure JWT works
-    if secret_key != jwt_secret_key:
-        print(f"⚠️  WARNING: SECRET_KEY and JWT_SECRET_KEY don't match!")
-        print(f"   SECRET_KEY: {secret_key[:10]}...")
-        print(f"   JWT_SECRET_KEY: {jwt_secret_key[:10]}...")
-        print(f"   🔧 Forcing JWT_SECRET_KEY to match SECRET_KEY")
+    # CRITICAL: Ensure JWT_SECRET_KEY always matches SECRET_KEY
+    if jwt_secret_key is None or jwt_secret_key != secret_key:
+        print(f"🔧 FORCING JWT_SECRET_KEY to match SECRET_KEY for consistency")
         jwt_secret_key = secret_key
 
     # Ensure both secrets are the same for JWT to work properly
