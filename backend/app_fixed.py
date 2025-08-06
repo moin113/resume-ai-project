@@ -69,7 +69,7 @@ def create_app():
 
     # Get environment variables
     secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
-    jwt_secret_key = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-for-testing-only')
+    jwt_secret_key = os.getenv('JWT_SECRET_KEY', secret_key)  # Use same secret as fallback
 
     # Ensure both secrets are the same for JWT to work properly
     app.config['SECRET_KEY'] = secret_key
