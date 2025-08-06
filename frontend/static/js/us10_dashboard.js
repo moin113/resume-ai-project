@@ -26,7 +26,7 @@ async function fetchWithAuthRetry(url, options = {}, retry = true) {
     options.headers['Authorization'] = `Bearer ${token}`;
 
     // Always use full backend URL for static hosting
-    const backendBase = 'https://resume-doctor-ai.onrender.com';
+    const backendBase = API_BASE_URL;
     let fullUrl = url.startsWith('http') ? url : backendBase + url;
     let response = await fetch(fullUrl, options);
     if (response.status === 401 && retry) {

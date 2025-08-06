@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setLoading(true);
         
         try {
-            const response = await fetch('https://resume-doctor-ai.onrender.com/api/register', {
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -112,7 +112,7 @@ function isValidEmail(email) {
 
 async function checkEmailExists(email) {
     try {
-        const response = await fetch('https://resume-doctor-ai.onrender.com/api/check-email', {
+        const response = await fetch(`${API_BASE_URL}/api/check-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
