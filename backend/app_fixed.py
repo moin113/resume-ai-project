@@ -190,6 +190,18 @@ def create_app():
             import traceback; traceback.print_exc()
             return jsonify({'success': False, 'message': str(e)}), 500
 
+    # Debug endpoint to check JWT configuration
+    @app.route('/api/debug/jwt', methods=['GET'])
+    def debug_jwt():
+        """Debug JWT configuration"""
+        return jsonify({
+            'secret_key_first_10': app.config.get('SECRET_KEY', 'NOT_SET')[:10],
+            'jwt_secret_key_first_10': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10],
+            'keys_match': app.config.get('SECRET_KEY') == app.config.get('JWT_SECRET_KEY'),
+            'env_secret_key': os.getenv('SECRET_KEY', 'NOT_SET')[:10],
+            'env_jwt_secret_key': os.getenv('JWT_SECRET_KEY', 'NOT_SET')[:10],
+        })
+
     print("✅ Flask app created successfully")
 
     # Add security and cache-control headers to all responses
