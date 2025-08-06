@@ -67,12 +67,18 @@ def create_app():
     db_path = os.path.join(project_root, 'database', 'dr_resume_dev.db')
     upload_path = os.path.join(project_root, 'uploads')
 
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-for-testing-only')
+    # Get environment variables
+    secret_key = os.getenv('SECRET_KEY', 'dev-secret-key')
+    jwt_secret_key = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-for-testing-only')
+
+    # Ensure both secrets are the same for JWT to work properly
+    app.config['SECRET_KEY'] = secret_key
+    app.config['JWT_SECRET_KEY'] = jwt_secret_key
 
     # Debug: Log JWT secret key (first 10 chars only for security)
-    jwt_secret = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-for-testing-only')
-    print(f"🔑 JWT Secret Key (first 10 chars): {jwt_secret[:10]}...")
+    print(f"🔑 SECRET_KEY (first 10 chars): {secret_key[:10]}...")
+    print(f"🔑 JWT_SECRET_KEY (first 10 chars): {jwt_secret_key[:10]}...")
+    print(f"🔑 Keys match: {secret_key == jwt_secret_key}")
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = upload_path
@@ -109,7 +115,8 @@ def create_app():
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
         logger.warning(f"JWT invalid: error={error}")
-        logger.warning(f"JWT secret being used: {app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]}...")
+        logger.warning(f"JWT_SECRET_KEY being used: {app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]}...")
+        logger.warning(f"SECRET_KEY being used: {app.config.get('SECRET_KEY', 'NOT_SET')[:10]}...")
         return jsonify({'success': False, 'message': 'Invalid token', 'error': 'invalid_token'}), 401
 
     @jwt.unauthorized_loader
