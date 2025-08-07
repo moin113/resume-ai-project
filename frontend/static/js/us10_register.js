@@ -1,7 +1,7 @@
-// Dr. Resume US-04 Registration JavaScript (same as US-03)
+// Resume Doctor.Ai US-04 Registration JavaScript (same as US-03)
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🩺 Dr. Resume Registration Page Loaded (US-04)');
+    console.log('🤖 Resume Doctor.Ai Registration Page Loaded (US-04)');
     
     const form = document.getElementById('registerForm');
     const submitBtn = document.getElementById('submitBtn');

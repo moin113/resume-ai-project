@@ -1,7 +1,7 @@
-// Dr. Resume US-04 Login JavaScript (same as US-03)
+// Resume Doctor.Ai US-04 Login JavaScript (same as US-03)
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🩺 Dr. Resume Login Page Loaded (US-04)');
+    console.log('🤖 Resume Doctor.Ai Login Page Loaded (US-04)');
     
     const token = localStorage.getItem('dr_resume_token');
     if (token) {
