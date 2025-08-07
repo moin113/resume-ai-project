@@ -73,7 +73,7 @@ function redirectToLogin() {
     localStorage.removeItem('dr_resume_token');
     localStorage.removeItem('dr_resume_refresh_token');
     localStorage.removeItem('dr_resume_user');
-    window.location.href = '/login';
+    window.location.href = 'us10_login.html';
 }
 
 // Resume Doctor.Ai US-10 Dashboard JavaScript with Scan History
@@ -1120,7 +1120,7 @@ async function checkAuthentication() {
     const token = localStorage.getItem('dr_resume_token');
     if (!token) {
         console.log('❌ No token found, redirecting to login');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
         return;
     }
     try {

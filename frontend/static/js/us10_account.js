@@ -21,7 +21,7 @@ async function checkAuthentication() {
     
     if (!token) {
         console.log('❌ No token found, redirecting to login');
-        window.location.href = '/login';
+        window.location.href = 'us10_login.html';
         return;
     }
     
@@ -40,7 +40,7 @@ async function checkAuthentication() {
                 alert('Session expired. Please log in again.');
                 localStorage.removeItem('dr_resume_token');
                 localStorage.removeItem('dr_resume_refresh_token');
-                window.location.href = '/login';
+                window.location.href = 'us10_login.html';
                 return;
             }
             throw new Error('Token verification failed');

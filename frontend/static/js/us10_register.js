@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 showAlert('success', result.message);
                 form.reset();
-                setTimeout(() => { window.location.href = '/login'; }, 2000);
+                setTimeout(() => { window.location.href = 'us10_login.html'; }, 2000);
             } else {
                 if (result.errors && result.errors.length > 0) {
                     showAlert('error', result.message, result.errors);
