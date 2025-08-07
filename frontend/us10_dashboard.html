@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Resume Doctor.Ai</title>
-    <link rel="stylesheet" href="/static/css/us10_styles.css">
+    <link rel="stylesheet" href="./static/css/us10_styles.css">
     <style>
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -12,27 +12,29 @@
         }
 
         .suggestion-item {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            background: rgba(51, 65, 85, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 12px;
             padding: 16px;
             margin-bottom: 12px;
             transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
         }
 
         .suggestion-item:hover {
-            border-color: #475569;
-            box-shadow: 0 4px 12px rgba(71, 85, 105, 0.1);
+            border-color: #10b981;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+            background: rgba(51, 65, 85, 0.8);
         }
 
         .suggestion-title {
             font-weight: 600;
-            color: #1f2937;
+            color: #e2e8f0;
             margin-bottom: 8px;
         }
 
         .suggestion-description {
-            color: #6b7280;
+            color: #94a3b8;
             font-size: 14px;
             line-height: 1.5;
         }
@@ -47,18 +49,21 @@
         }
 
         .priority-high {
-            background: #fee2e2;
-            color: #991b1b;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .priority-medium {
-            background: #fef3c7;
-            color: #92400e;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .priority-low {
-            background: #dcfce7;
-            color: #166534;
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         /* Responsive Design for New Dashboard */
@@ -87,8 +92,8 @@
             <div>
                 <h1>🤖 Resume Doctor.Ai</h1>
                 <nav class="dashboard-nav">
-                    <a href="#" class="nav-item active">📊 Dashboard</a>
-                    <a href="/account" class="nav-item">⚙️ Account</a>
+                    <a href="us10_dashboard.html" class="nav-item active">📊 Dashboard</a>
+                    <a href="us10_account.html" class="nav-item">⚙️ Account</a>
                 </nav>
             </div>
             
@@ -105,11 +110,11 @@
             <!-- New Dashboard Layout -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
                 <!-- Resume Upload Section -->
-                <div style="background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 12px; padding: 30px; text-align: center; transition: all 0.2s ease;" id="resumeUploadSection">
+                <div style="background: rgba(51, 65, 85, 0.6); border: 2px dashed rgba(71, 85, 105, 0.4); border-radius: 12px; padding: 30px; text-align: center; transition: all 0.2s ease; backdrop-filter: blur(10px);" id="resumeUploadSection">
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
                         <div style="font-size: 24px;">📋</div>
-                        <h3 style="color: #1f2937; margin: 0; font-size: 18px; font-weight: 600;">Resume</h3>
-                        <button style="background: #6b7280; color: white; border: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer;" onclick="toggleResumeSelection()">Select Saved</button>
+                        <h3 style="color: #e2e8f0; margin: 0; font-size: 18px; font-weight: 600;">Resume</h3>
+                        <button style="background: rgba(71, 85, 105, 0.6); color: #e2e8f0; border: 1px solid rgba(71, 85, 105, 0.4); border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: all 0.2s ease;" onclick="toggleResumeSelection()">Select Saved</button>
                     </div>
 
                     <!-- Resume Selection Mode Toggle -->
@@ -351,7 +356,7 @@
         </div>
     </div>
 
-    <script src="/static/js/config.js"></script>
-    <script src="/static/js/us10_dashboard.js"></script>
+    <script src="./static/js/config.js"></script>
+    <script src="./static/js/us10_dashboard.js"></script>
 </body>
 </html>

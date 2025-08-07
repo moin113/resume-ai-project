@@ -4,33 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Doctor.Ai - AI-Powered Resume Scanner & Job Matching Platform</title>
-    <link rel="stylesheet" href="/static/css/us10_styles.css">
+    <link rel="stylesheet" href="./static/css/us10_styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>
-                🤖 Welcome to Resume Doctor.Ai
-            </h1>
-            <p class="subtitle">AI-Powered Resume Scanner & Job Matching Platform</p>
+    <div class="auth-container">
+        <div class="lock-icon">🤖</div>
+
+        <div class="auth-header">
+            <h1>Resume Doctor.Ai</h1>
+            <p class="subtitle">AI-Powered Resume Analysis & Job Matching Platform</p>
         </div>
-        
-        <div class="content">
-            <p class="welcome-text">
-                Get started by creating an account or signing in to access all features.
-            </p>
-            
-            <a href="us10_register.html" class="btn btn-primary">
-                👤 Create Account
-            </a>
-            
-            <a href="us10_login.html" class="btn btn-secondary">
-                🔐 Sign In
-            </a>
-        </div>
+
+        <p class="welcome-text">
+            Get started by creating an account or signing in to access all features.
+        </p>
+
+        <a href="us10_register.html" class="btn btn-primary">
+            👤 Create Account
+        </a>
+
+        <a href="us10_login.html" class="btn btn-secondary">
+            🔐 Login to Resume Doctor.Ai
+        </a>
     </div>
 
-    <script src="/static/js/config.js"></script>
+    <script src="./static/js/config.js"></script>
     <script>
         // Check if user is already logged in
         const token = localStorage.getItem('dr_resume_token');
