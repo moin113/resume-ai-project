@@ -23,8 +23,8 @@ from sqlalchemy import text
 # Add the backend directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app_fixed import app, db
-from models import User, Resume, JobDescription, ScanHistory
+from app_fixed import app
+from models import db, User, Resume, JobDescription, MatchScore, Suggestion
 
 def clear_all_data():
     """Clear all data from all tables while preserving schema."""
@@ -50,36 +50,45 @@ def clear_all_data():
     print("\n🔄 Starting data clearing process...")
     
     try:
+        # Initialize the database with the app
+        db.init_app(app)
+
         with app.app_context():
             # Get initial counts
             user_count = User.query.count()
             resume_count = Resume.query.count()
             jd_count = JobDescription.query.count()
-            scan_count = ScanHistory.query.count()
-            
+            match_count = MatchScore.query.count()
+            suggestion_count = Suggestion.query.count()
+
             print(f"📊 Current data counts:")
             print(f"   - Users: {user_count}")
             print(f"   - Resumes: {resume_count}")
             print(f"   - Job Descriptions: {jd_count}")
-            print(f"   - Scan History: {scan_count}")
+            print(f"   - Match Scores: {match_count}")
+            print(f"   - Suggestions: {suggestion_count}")
             print()
-            
+
             # Clear data in correct order (respecting foreign key constraints)
             print("🗑️  Clearing data...")
-            
-            # 1. Clear scan history first (has foreign keys to resumes and job_descriptions)
-            ScanHistory.query.delete()
-            print("   ✅ Cleared scan history")
-            
-            # 2. Clear resumes (has foreign key to users)
+
+            # 1. Clear suggestions first (has foreign keys to resumes and job_descriptions)
+            Suggestion.query.delete()
+            print("   ✅ Cleared suggestions")
+
+            # 2. Clear match scores (has foreign keys to resumes and job_descriptions)
+            MatchScore.query.delete()
+            print("   ✅ Cleared match scores")
+
+            # 3. Clear resumes (has foreign key to users)
             Resume.query.delete()
             print("   ✅ Cleared resumes")
-            
-            # 3. Clear job descriptions (has foreign key to users)
+
+            # 4. Clear job descriptions (has foreign key to users)
             JobDescription.query.delete()
             print("   ✅ Cleared job descriptions")
-            
-            # 4. Clear users last
+
+            # 5. Clear users last
             User.query.delete()
             print("   ✅ Cleared users")
             
@@ -89,29 +98,32 @@ def clear_all_data():
                 db.session.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 1"))
                 db.session.execute(text("ALTER SEQUENCE resumes_id_seq RESTART WITH 1"))
                 db.session.execute(text("ALTER SEQUENCE job_descriptions_id_seq RESTART WITH 1"))
-                db.session.execute(text("ALTER SEQUENCE scan_history_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE match_scores_id_seq RESTART WITH 1"))
+                db.session.execute(text("ALTER SEQUENCE resume_suggestions_id_seq RESTART WITH 1"))
                 print("   ✅ Reset ID sequences")
             except Exception as e:
                 # For SQLite or if sequences don't exist
                 print(f"   ⚠️  Could not reset sequences: {e}")
-            
+
             # Commit all changes
             db.session.commit()
-            
+
             # Verify clearing
             final_user_count = User.query.count()
             final_resume_count = Resume.query.count()
             final_jd_count = JobDescription.query.count()
-            final_scan_count = ScanHistory.query.count()
-            
+            final_match_count = MatchScore.query.count()
+            final_suggestion_count = Suggestion.query.count()
+
             print(f"\n📊 Final data counts:")
             print(f"   - Users: {final_user_count}")
             print(f"   - Resumes: {final_resume_count}")
             print(f"   - Job Descriptions: {final_jd_count}")
-            print(f"   - Scan History: {final_scan_count}")
-            
-            if (final_user_count == 0 and final_resume_count == 0 and 
-                final_jd_count == 0 and final_scan_count == 0):
+            print(f"   - Match Scores: {final_match_count}")
+            print(f"   - Suggestions: {final_suggestion_count}")
+
+            if (final_user_count == 0 and final_resume_count == 0 and
+                final_jd_count == 0 and final_match_count == 0 and final_suggestion_count == 0):
                 print("\n✅ SUCCESS: All data cleared successfully!")
                 print("🔄 Database is now ready for fresh start.")
                 print("📋 Schema preserved - all tables and relationships intact.")
@@ -131,6 +143,9 @@ def verify_schema():
     print("\n🔍 Verifying database schema...")
     
     try:
+        # Initialize the database with the app
+        db.init_app(app)
+
         with app.app_context():
             # Test that we can create tables (should already exist)
             db.create_all()
@@ -164,7 +179,7 @@ def verify_schema():
             db.session.add(test_jd)
             db.session.flush()
             
-            test_scan = ScanHistory(
+            test_match = MatchScore(
                 user_id=test_user.id,
                 resume_id=test_resume.id,
                 job_description_id=test_jd.id,
@@ -173,7 +188,7 @@ def verify_schema():
                 soft_skills_score=80.0,
                 other_score=85.0
             )
-            db.session.add(test_scan)
+            db.session.add(test_match)
             
             # Rollback test data
             db.session.rollback()
@@ -181,7 +196,7 @@ def verify_schema():
             print("   ✅ Users table - OK")
             print("   ✅ Resumes table - OK")
             print("   ✅ Job Descriptions table - OK")
-            print("   ✅ Scan History table - OK")
+            print("   ✅ Match Scores table - OK")
             print("   ✅ Foreign key relationships - OK")
             print("\n✅ Schema verification complete - All tables functional!")
             
