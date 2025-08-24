@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Resume Doctor AI</title>
+    <link rel="stylesheet" href="static/css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <!-- Menu Navigation -->
+                <div class="menu-section">
+                    <div class="menu-header">
+                        <div class="logo-dot"></div>
+                        <span class="menu-title">Menu Navigation</span>
+                    </div>
+                    
+                    <nav class="navigation-menu">
+                        <a href="#" class="nav-item active" data-route="overview">
+                            <span class="nav-icon">📊</span>
+                            <span class="nav-label">Overview</span>
+                        </a>
+                        <a href="#" class="nav-item" data-route="projects">
+                            <span class="nav-icon">💼</span>
+                            <span class="nav-label">Projects</span>
+                        </a>
+                        <a href="#" class="nav-item" data-route="analytics">
+                            <span class="nav-icon">📈</span>
+                            <span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="#" class="nav-item" data-route="settings">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-label">Settings</span>
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <h3 class="progress-title">Your Progress</h3>
+                    
+                    <div class="progress-cards">
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-icon">🎯</span>
+                                <div class="progress-info">
+                                    <span class="progress-label">Track your progress</span>
+                                    <span class="progress-action">Start</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%"></div>
+                                </div>
+                                <span class="progress-text">Progress 20%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-icon">🎯</span>
+                                <div class="progress-info">
+                                    <span class="progress-label">Great progress!</span>
+                                    <span class="progress-status on-track">On track</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 60%"></div>
+                                </div>
+                                <span class="progress-text">Progress 60%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-icon">🎯</span>
+                                <div class="progress-info">
+                                    <span class="progress-label">Keep optimizing</span>
+                                    <span class="progress-status almost">Almost</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 85%"></div>
+                                </div>
+                                <span class="progress-text">Progress 85%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-card">
+                            <div class="progress-header">
+                                <span class="progress-icon">🎯</span>
+                                <div class="progress-info">
+                                    <span class="progress-label">Ready to use</span>
+                                    <span class="progress-status done">Done</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%"></div>
+                                </div>
+                                <span class="progress-text">Progress 100%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="view-all-btn">
+                        View all →
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Banner -->
+            <section class="welcome-banner">
+                <h1 class="welcome-title">Welcome back, User</h1>
+                <p class="welcome-subtitle">Ready to optimize your job search? Let's start</p>
+            </section>
+
+            <!-- Dashboard Stats -->
+            <section class="dashboard-section">
+                <div class="dashboard-header">
+                    <span class="dashboard-icon">📊</span>
+                    <span class="dashboard-label">Dashboard</span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">Resumes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Job Descriptions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">Scans</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Scan History -->
+            <section class="scan-history-section">
+                <div class="section-header">
+                    <h2 class="section-title">Recent Scan History</h2>
+                    <div class="section-controls">
+                        <select class="filter-select">
+                            <option value="all">All Scores</option>
+                            <option value="excellent">Excellent (80%+)</option>
+                            <option value="good">Good (60-79%)</option>
+                            <option value="fair">Fair (40-59%)</option>
+                            <option value="poor">Poor (<40%)</option>
+                        </select>
+                        <button class="refresh-btn">🔄</button>
+                    </div>
+                </div>
+                
+                <div class="scan-card">
+                    <div class="scan-header">
+                        <span class="document-icon">📄</span>
+                        <h3 class="file-name">Md_Moin_Ashraf_2_1.docx</h3>
+                        <span class="scan-status">Scan Complete</span>
+                    </div>
+                    
+                    <div class="scan-meta">
+                        <p class="keyword-count">5/30 keywords</p>
+                        <p class="job-description">Job Description: Frontend Developer • Acme Corp ...</p>
+                        <p class="scan-date">23 Aug 2025 • 3:29</p>
+                    </div>
+                    
+                    <div class="score-summary">
+                        <div class="match-percentage">26.48% Match</div>
+                    </div>
+                    
+                    <div class="keyword-breakdown">
+                        <div class="keyword-item">
+                            <div class="keyword-percentage">10.34%</div>
+                            <div class="keyword-label">Technical</div>
+                            <div class="keyword-bar technical"></div>
+                        </div>
+                        <div class="keyword-item">
+                            <div class="keyword-percentage">100%</div>
+                            <div class="keyword-label">Soft Skills</div>
+                            <div class="keyword-bar soft-skills"></div>
+                        </div>
+                        <div class="keyword-item">
+                            <div class="keyword-percentage">4.35%</div>
+                            <div class="keyword-label">Other</div>
+                            <div class="keyword-bar other"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Job Description Input -->
+            <section class="job-input-section">
+                <h2 class="section-title">Job Description</h2>
+                <p class="section-subtitle">Enter a new description or select a saved one to process.</p>
+                
+                <div class="input-actions">
+                    <button class="action-btn primary">
+                        <span class="btn-icon">➕</span>
+                        Enter New
+                    </button>
+                    <button class="action-btn secondary">
+                        <span class="btn-icon">📁</span>
+                        Select Saved
+                    </button>
+                </div>
+                
+                <div class="saved-job-placeholder">
+                    <span class="placeholder-icon">📁</span>
+                    <div class="placeholder-content">
+                        <h4>No saved job selected</h4>
+                        <p>Choose a saved description or enter a new one.</p>
+                    </div>
+                    <button class="select-saved-btn">Select Saved</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="static/js/config.js"></script>
+    <script src="static/js/dashboard.js"></script>
+</body>
+</html>

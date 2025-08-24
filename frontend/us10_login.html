@@ -3,28 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Resume Doctor.Ai</title>
-    <link rel="stylesheet" href="./static/css/us10_styles.css">
+    <title>Login - ResumeDoctor AI</title>
+    <link rel="stylesheet" href="static/css/auth_styles.css">
 </head>
 <body>
     <div class="auth-container">
-        <button class="close-btn" onclick="window.history.back()">×</button>
-
-        <div class="lock-icon">🔒</div>
-
         <div class="auth-header">
-            <h1>Resume Doctor.Ai</h1>
+            <h1>🤖 ResumeDoctor AI</h1>
+            <p class="subtitle">Sign in to your account</p>
         </div>
 
         <div id="alertContainer"></div>
 
         <form id="loginForm">
             <div class="form-group">
-                <input type="email" id="email" name="email" class="form-control" placeholder="Email" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
             </div>
 
             <div class="form-group">
-                <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
             </div>
 
             <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
@@ -35,7 +34,7 @@
         </div>
     </div>
 
-    <script src="./static/js/config.js"></script>
-    <script src="./static/js/us10_login.js"></script>
+    <script src="static/js/config.js"></script>
+    <script src="static/js/us10_login.js"></script>
 </body>
 </html>
