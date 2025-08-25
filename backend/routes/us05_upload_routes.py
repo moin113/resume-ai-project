@@ -22,7 +22,14 @@ def upload_resume():
     Expected: multipart/form-data with 'resume' file and optional 'title'
     """
     try:
+        # Debug logging
+        current_app.logger.info(f"📤 Upload request received")
+        current_app.logger.info(f"📄 Request files: {list(request.files.keys())}")
+        current_app.logger.info(f"📄 Request form: {dict(request.form)}")
+        current_app.logger.info(f"📄 Content-Type: {request.content_type}")
+
         current_user_id = get_jwt_identity()
+        current_app.logger.info(f"👤 User ID: {current_user_id}")
         user = User.query.get(current_user_id)
         
         if not user:
@@ -107,7 +114,9 @@ def upload_resume():
             resume.error_message = parse_error
 
         db.session.commit()
-        
+
+        # Note: Suggestions are now generated manually by clicking buttons, not automatically
+
         return jsonify({
             'success': True,
             'message': 'Resume uploaded and processed successfully' if success else 'Resume uploaded but parsing failed',
@@ -118,19 +127,47 @@ def upload_resume():
         }), 201
         
     except Exception as e:
-        db.session.rollback()
-        
+        # Enhanced error logging
+        current_app.logger.error(f"❌ Upload error: {str(e)}")
+        import traceback
+        current_app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
+
+        # Proper session rollback handling
+        try:
+            db.session.rollback()
+            current_app.logger.info("🔄 Database session rolled back")
+        except Exception as rollback_error:
+            current_app.logger.error(f"❌ Rollback error: {rollback_error}")
+            # If rollback fails, close and recreate the session
+            try:
+                db.session.close()
+                current_app.logger.info("🔄 Database session closed")
+            except Exception as close_error:
+                current_app.logger.error(f"❌ Session close error: {close_error}")
+
         # Clean up file if it was saved
         if 'file_path' in locals() and os.path.exists(file_path):
             try:
                 os.remove(file_path)
-            except:
-                pass
-        
+                current_app.logger.info(f"🧹 Cleaned up file: {file_path}")
+            except Exception as cleanup_error:
+                current_app.logger.error(f"❌ Cleanup error: {cleanup_error}")
+
+        # Determine user-friendly error message
+        error_message = 'Upload failed. Please try again.'
+        if 'NUL' in str(e) or '0x00' in str(e):
+            error_message = 'The uploaded file contains invalid characters. Please try a different file or save it in a different format.'
+        elif 'rollback' in str(e).lower():
+            error_message = 'Database error occurred. Please try uploading again.'
+
         return jsonify({
             'success': False,
-            'message': 'Upload failed. Please try again.',
-            'error': str(e)
+            'message': error_message,
+            'error': str(e),
+            'debug_info': {
+                'error_type': type(e).__name__,
+                'user_id': current_user_id if 'current_user_id' in locals() else None
+            }
         }), 500
 
 @upload_bp.route('/resumes', methods=['GET'])

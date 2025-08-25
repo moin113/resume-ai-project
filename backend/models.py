@@ -29,6 +29,9 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), default='basic')  # basic, premium, admin
     is_active = db.Column(db.Boolean, default=True)
+    is_email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(255), nullable=True)
+    email_verification_sent_at = db.Column(db.DateTime, nullable=True)
     last_login = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -99,6 +102,30 @@ class User(db.Model):
         """Check if user has specific role"""
         return self.role == role
 
+    def generate_email_verification_token(self):
+        """Generate email verification token"""
+        import secrets
+        self.email_verification_token = secrets.token_urlsafe(32)
+        self.email_verification_sent_at = datetime.utcnow()
+        return self.email_verification_token
+
+    def verify_email(self, token):
+        """Verify email with token"""
+        if self.email_verification_token == token:
+            self.is_email_verified = True
+            self.email_verification_token = None
+            self.email_verification_sent_at = None
+            return True
+        return False
+
+    def is_verification_token_expired(self, hours=24):
+        """Check if verification token is expired (default 24 hours)"""
+        if not self.email_verification_sent_at:
+            return True
+        from datetime import timedelta
+        expiry_time = self.email_verification_sent_at + timedelta(hours=hours)
+        return datetime.utcnow() > expiry_time
+
     def is_premium(self):
         """Check if user has premium access"""
         return self.role in ['premium', 'admin']
@@ -136,6 +163,7 @@ class User(db.Model):
             'is_premium': self.is_premium(),
             'is_admin': self.is_admin(),
             'is_active': self.is_active,
+            'is_email_verified': self.is_email_verified,
             'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'resume_count': len(self.resumes),

@@ -1,260 +1,127 @@
-# 🩺 Resume Doctor AI - Complete Setup & Deployment Guide
+# 🎯 Dr. Resume AI
 
-## 📋 Table of Contents
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Critical Fixes Applied](#critical-fixes-applied)
-- [Deployment URLs](#deployment-urls)
-- [Environment Variables](#environment-variables)
-- [Local Development Setup](#local-development-setup)
-- [Production Deployment](#production-deployment)
-- [Database Management](#database-management)
-- [Troubleshooting](#troubleshooting)
+**AI-powered resume optimization and job matching platform**
 
-## 🎯 Overview
+## 🚀 Quick Start
 
-Resume Doctor AI is a comprehensive AI-powered resume analysis and job matching platform built with Flask (backend) and vanilla JavaScript (frontend). The application provides intelligent resume scanning, keyword extraction, job matching, and improvement suggestions.
+1. **Install Python 3.8+** and pip
+2. **Install dependencies**: `pip install -r backend/requirements.txt`
+3. **Create environment file**: Add `.env` file in `backend/` folder with your secret keys
+4. **Run the app**: `python backend/app.py`
+5. **Open browser**: Go to `http://localhost:5000`
 
-### Key Features
-- 🔐 User Authentication & Authorization
-- 📄 Resume Upload & Analysis
-- 💼 Job Description Management
-- 🎯 AI-Powered Matching Algorithm
-- 📊 Detailed Analytics & Scoring
-- 💡 Intelligent Improvement Suggestions
-- 📱 Responsive Web Interface
+## 📚 Documentation
 
-## 🏗️ Architecture
+- **📖 [Complete Project Overview](PROJECT_OVERVIEW.md)** - Detailed project documentation
+- **📁 [File-by-File Explanations](FILE_EXPLANATIONS.md)** - Code explanations for beginners
+- **🚀 [Setup Guide](SETUP_GUIDE.md)** - Step-by-step installation instructions
+
+## 🌟 Features
+
+- Resume upload and analysis (PDF/DOCX)
+- Job description processing
+- AI-powered keyword matching
+- Smart improvement suggestions
+- Match score calculation
+- Scan history tracking
+- User authentication & accounts
+
+## 📁 Project Structure
 
 ```
-Resume-Doctor/
-├── backend/                 # Flask API Server
-│   ├── app_fixed.py        # Main application file
-│   ├── models.py           # Database models
-│   ├── routes/             # API route handlers
-│   ├── services/           # Business logic
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # Static web interface
-│   ├── *.html             # HTML pages
-│   └── static/            # CSS, JS, assets
-└── README.md              # This file
+resume-doctor.ai/
+├── 📁 backend/                    # Backend Flask Application
+│   ├── 📄 app.py                 # Main Flask application
+│   ├── 📄 models.py              # Database models
+│   ├── 📄 requirements.txt       # Python dependencies
+│   ├── 📁 routes/                # API endpoints
+│   ├── 📁 services/              # Business logic
+│   └── 📁 middleware/            # Authentication middleware
+├── 📁 frontend/                  # Frontend Web Interface
+│   ├── 📄 us10_dashboard.html    # Main dashboard
+│   ├── 📄 us10_login.html        # Login page
+│   ├── 📄 us10_register.html     # Registration page
+│   └── 📁 static/                # CSS, JS, assets
+├── 📁 database/                  # Database files
+├── 📁 uploads/                   # User uploaded files
+├── 📁 docs/                      # Technical documentation
+├── 📄 run_app.py                 # Application launcher
+└── 📄 start_app.bat              # Windows startup script
 ```
 
-## 🔧 Critical Fixes Applied
+## 🔧 Technology Stack
 
-### 1. **JWT Authentication Fix** ⚡
-**Problem**: JWT tokens were failing verification immediately after login
-**Root Cause**: Identity type mismatch (integer vs string)
-**Solution**:
-- Convert user ID to string when creating tokens: `identity=str(user.id)`
-- Convert back to int for database queries: `int(get_jwt_identity())`
-- Added helper functions in `models.py` for consistent handling
+- **Backend**: Flask (Python), SQLite, JWT Authentication
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **File Processing**: PyPDF2, python-docx
+- **AI/NLP**: Custom keyword extraction algorithms
 
-### 2. **Environment Variables Configuration** 🔑
-**Problem**: JWT secrets not matching between generation and verification
-**Solution**:
-- Force JWT_SECRET_KEY to always match SECRET_KEY
-- Enhanced environment variable loading with fallbacks
-- Added comprehensive debugging logs
+## 🎯 How It Works
 
-### 3. **Frontend Deployment Fixes** 🌐
-**Problem**: Frontend redirects using incorrect paths for static deployment
-**Solution**:
-- Updated all redirects from `/dashboard` to `us10_dashboard.html`
-- Fixed navigation links between pages
-- Ensured proper static file serving
+1. **Upload Resume** → System extracts text and keywords
+2. **Add Job Description** → System analyzes requirements
+3. **Generate Suggestions** → AI compares and creates recommendations
+4. **View Results** → See match scores and improvement suggestions
+5. **Track Progress** → Monitor your optimization journey
 
-### 4. **Database Schema Optimization** 🗄️
-**Improvements**:
-- Added proper foreign key relationships
-- Implemented cascade deletes for data integrity
-- Added indexes for better query performance
+## 🔐 Security Features
 
-## 🌍 Deployment URLs
+- JWT token authentication
+- User data isolation
+- File validation and sanitization
+- SQL injection protection
+- CORS configuration
 
-### ✅ **Primary Application (Recommended)**
-```
-https://resume-doctor-ai.onrender.com
-```
-**Use this URL for:**
-- Production use
-- Sharing with friends/users
-- Complete functionality (frontend + backend)
+## 🚀 Deployment
 
-### 🔧 **Frontend-Only Deployment (Optional)**
-```
-https://resume-doctor-ai-frontend.onrender.com
-```
-**Note**: This is a separate static deployment for testing purposes
+The application can be deployed on:
+- Local development server
+- Heroku, AWS, DigitalOcean
+- Any platform supporting Python/Flask
 
-## 🔐 Environment Variables
+## 📈 Future Enhancements
 
-### Required Environment Variables
-```bash
-# Database
-DATABASE_URL=postgresql://username:password@host:port/database
-
-# Security Keys
-SECRET_KEY=your-secret-key-here
-JWT_SECRET_KEY=your-jwt-secret-key-here  # Should match SECRET_KEY
-
-# OpenAI API (for AI features)
-OPENAI_API_KEY=your-openai-api-key-here
-
-# Flask Configuration
-FLASK_ENV=production
-FLASK_DEBUG=False
-```
-
-### ⚠️ **Important**: Environment Variables in Git
-**DO NOT** commit `.env` files to Git repository for security reasons.
-- Set environment variables directly in Render dashboard
-- Use `.env.example` for documentation
-- Keep sensitive keys secure
-
-## 🚀 Local Development Setup
-
-### Prerequisites
-- Python 3.8+
-- PostgreSQL
-- Git
-
-### Installation Steps
-
-1. **Clone Repository**
-```bash
-git clone https://github.com/TABISHCODING/resume-doctor.ai.git
-cd resume-doctor
-```
-
-2. **Create Virtual Environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install Dependencies**
-```bash
-pip install -r backend/requirements.txt
-```
-
-4. **Setup Environment Variables**
-```bash
-cp .env.example .env
-# Edit .env with your actual values
-```
-
-5. **Initialize Database**
-```bash
-python backend/init_db.py
-```
-
-6. **Run Application**
-```bash
-python backend/app_fixed.py
-```
-
-7. **Access Application**
-- Open browser to `http://localhost:5000`
-
-## 🌐 Production Deployment
-
-### Render.com Deployment
-
-1. **Connect GitHub Repository**
-   - Link your GitHub repo to Render
-   - Select `backend/app_fixed.py` as entry point
-
-2. **Configure Environment Variables**
-   - Add all required environment variables in Render dashboard
-   - Ensure `JWT_SECRET_KEY` matches `SECRET_KEY`
-
-3. **Database Setup**
-   - Use Render PostgreSQL add-on
-   - Set `DATABASE_URL` environment variable
-
-4. **Deploy**
-   - Render automatically deploys on git push
-   - Monitor logs for any issues
-
-### Frontend Deployment (Optional)
-- Deploy `frontend/` directory as static site
-- Ensure `config.js` points to correct backend URL
-
-## 🗄️ Database Management
-
-### Fresh Start (Clear All Data)
-```python
-# Run this script to clear all data while keeping schema
-python backend/clear_data.py
-```
-
-### Manual Database Reset
-```sql
--- Connect to your database and run:
-TRUNCATE TABLE scan_history, job_descriptions, resumes, users RESTART IDENTITY CASCADE;
-```
-
-### Backup Database
-```bash
-pg_dump $DATABASE_URL > backup.sql
-```
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-#### 1. **Authentication Fails**
-- Check JWT secrets match in environment variables
-- Verify token format in browser localStorage
-- Check server logs for JWT errors
-
-#### 2. **Frontend Not Loading**
-- Verify API_BASE_URL in `frontend/static/js/config.js`
-- Check CORS configuration in backend
-- Ensure all redirects use correct file paths
-
-#### 3. **Database Connection Issues**
-- Verify DATABASE_URL format
-- Check PostgreSQL service status
-- Ensure database exists and is accessible
-
-#### 4. **502 Bad Gateway**
-- Wait for deployment to complete (90+ seconds)
-- Check Render service logs
-- Verify all environment variables are set
-
-### Debug Commands
-```bash
-# Test authentication flow
-python backend/test_auth_flow.py
-
-# Test JWT generation
-python backend/test_jwt_generation.py
-
-# Check API endpoints
-python backend/simple_test.py
-```
-
-## 📞 Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review server logs in Render dashboard
-3. Test with provided debug scripts
-4. Verify environment variable configuration
-
-## 🎉 Success Indicators
-
-✅ **Application is working correctly when:**
-- Login redirects to dashboard successfully
-- Dashboard loads user data
-- Resume upload and analysis works
-- Job matching provides results
-- All navigation links work properly
+- OpenAI GPT integration
+- Resume templates
+- Job board integration
+- Mobile application
+- Advanced analytics
 
 ---
 
-**Last Updated**: January 2025
-**Version**: 1.0.0
-**Status**: Production Ready ✅
+**For detailed setup instructions, see [SETUP_GUIDE.md](SETUP_GUIDE.md)**
+
+## 🛠️ Development
+
+### Running the Application
+```bash
+# Install dependencies
+pip install -r backend/requirements.txt
+
+# Set up environment variables in backend/.env
+SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your-secret-key
+
+# Run the application
+python backend/app.py
+```
+
+### Project Status
+✅ **Fully Functional** - All core features working
+✅ **Authentication** - Login/register system
+✅ **File Upload** - PDF/DOCX resume processing
+✅ **AI Suggestions** - Basic and premium recommendations
+✅ **Match Scoring** - Resume-job compatibility analysis
+✅ **User Dashboard** - Complete user interface
+✅ **Data Persistence** - SQLite database storage
+
+## 📞 Support
+
+For questions or issues:
+1. Check the [SETUP_GUIDE.md](SETUP_GUIDE.md) for installation help
+2. Review [FILE_EXPLANATIONS.md](FILE_EXPLANATIONS.md) for code understanding
+3. See [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) for complete documentation
+
+---
+
+**Built with ❤️ for job seekers worldwide**

@@ -369,9 +369,107 @@ def get_available_suggestions():
             'job_descriptions': jd_list,
             'total_combinations': len(resume_list) * len(jd_list)
         }), 200
-        
+
     except Exception as e:
         logger.error(f"Error in get_available_suggestions: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Internal server error'
+        }), 500
+
+
+@suggestions_bp.route('/latest_suggestions', methods=['GET'])
+@protected_route
+def get_latest_suggestions():
+    """
+    Get the latest suggestions for the user's most recent resume and job description
+    """
+    try:
+        # Get current user
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'User not found'
+            }), 404
+
+        # Get most recent resume and job description with extracted keywords
+        latest_resume = Resume.query.filter_by(
+            user_id=user.id,
+            is_active=True,
+            keywords_extracted=True
+        ).order_by(Resume.created_at.desc()).first()
+
+        latest_jd = JobDescription.query.filter_by(
+            user_id=user.id,
+            is_active=True,
+            keywords_extracted=True
+        ).order_by(JobDescription.created_at.desc()).first()
+
+        if not latest_resume:
+            return jsonify({
+                'success': False,
+                'message': 'No processed resume found. Please upload a resume first.',
+                'suggestions': [],
+                'has_resume': False,
+                'has_job_description': latest_jd is not None
+            }), 200
+
+        if not latest_jd:
+            return jsonify({
+                'success': False,
+                'message': 'No job description found. Please upload a job description to get suggestions.',
+                'suggestions': [],
+                'has_resume': True,
+                'has_job_description': False
+            }), 200
+
+        # Generate basic suggestions for the latest combination
+        logger.info(f"Generating suggestions for resume {latest_resume.id} vs JD {latest_jd.id}")
+
+        suggestions_result = dynamic_suggestions_service.generate_basic_suggestions(
+            resume_id=latest_resume.id,
+            job_description_id=latest_jd.id,
+            user_id=user.id
+        )
+
+        logger.info(f"Suggestions result: success={suggestions_result.get('success')}, count={len(suggestions_result.get('suggestions', []))}")
+
+        if not suggestions_result['success']:
+            logger.error(f"Suggestions generation failed: {suggestions_result.get('message')}")
+            return jsonify({
+                'success': False,
+                'message': f"Failed to generate suggestions: {suggestions_result.get('message', 'Unknown error')}",
+                'suggestions': [],
+                'has_resume': True,
+                'has_job_description': True
+            }), 500
+
+        return jsonify({
+            'success': True,
+            'message': 'Latest suggestions retrieved successfully',
+            'suggestions': suggestions_result['suggestions'],
+            'total_suggestions': len(suggestions_result.get('suggestions', [])),
+            'matching_score': suggestions_result.get('matching_score', {}),
+            'resume': {
+                'id': latest_resume.id,
+                'title': latest_resume.title,
+                'filename': latest_resume.original_filename
+            },
+            'job_description': {
+                'id': latest_jd.id,
+                'title': latest_jd.title,
+                'company': latest_jd.company_name
+            },
+            'has_resume': True,
+            'has_job_description': True,
+            'generated_at': datetime.utcnow().isoformat()
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error in get_latest_suggestions: {e}")
         return jsonify({
             'success': False,
             'message': 'Internal server error'

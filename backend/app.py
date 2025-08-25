@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Fixed Flask Application for US-10
-Complete integration with proper error handling and sequential US features
+Dr. Resume AI - Flask Application
+AI-powered resume optimization and job matching platform
 """
 
 from flask import Flask, render_template, jsonify, request
@@ -12,11 +12,28 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Load environment variables from .env file (only if file exists)
-if os.path.exists('.env'):
-    load_dotenv()
-    print("🔧 Loaded .env file")
-else:
+# Add the project root to Python path for imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Load environment variables from .env file (check multiple locations)
+env_paths = [
+    '.env',  # Current directory
+    'backend/.env',  # Backend directory
+    os.path.join(os.path.dirname(__file__), '.env')  # Same directory as this file
+]
+
+env_loaded = False
+for env_path in env_paths:
+    if os.path.exists(env_path):
+        load_dotenv(env_path)
+        print(f"🔧 Loaded .env file from: {env_path}")
+        env_loaded = True
+        break
+
+if not env_loaded:
     print("🔧 No .env file found, using environment variables")
 
 def create_app():
@@ -157,81 +174,59 @@ def create_app():
     except Exception as e:
         print(f"⚠️ Database initialization warning: {e}")
 
-    # Register Blueprints safely
-    def safe_register(import_path, bp_name):
-        try:
-            module = __import__(import_path, fromlist=[bp_name])
-            app.register_blueprint(getattr(module, bp_name))
-            print(f"✅ {bp_name} registered")
-        except Exception as e:
-            print(f"⚠️ {bp_name} warning: {e}")
+    # Register Blueprints with better error handling
+    print("🔧 Registering blueprints...")
 
-    safe_register('backend.routes.us05_auth_routes', 'auth_bp')
-    safe_register('backend.routes.us05_upload_routes', 'upload_bp')
-    safe_register('backend.routes.us05_jd_routes', 'jd_bp')
-    safe_register('backend.routes.us06_matching_routes', 'matching_bp')
-    safe_register('backend.routes.us07_suggestions_routes', 'suggestions_bp')
-    safe_register('backend.routes.us10_history_routes', 'history_bp')
-    safe_register('backend.routes.us10_account_routes', 'account_bp')
+    try:
+        from backend.routes.us05_auth_routes import auth_bp
+        app.register_blueprint(auth_bp)
+        print("✅ auth_bp registered successfully")
+    except Exception as e:
+        print(f"❌ auth_bp failed: {e}")
+        import traceback
+        traceback.print_exc()
 
-    # Sample test endpoint
-    @app.route('/api/test-available-data', methods=['GET'])
-    def test_available_data():
-        try:
-            from backend.models import db, Resume, JobDescription
-            resumes = Resume.query.all()
-            jds = JobDescription.query.all()
-            return jsonify({
-                'success': True,
-                'total_resumes': len(resumes),
-                'total_job_descriptions': len(jds)
-            })
-        except Exception as e:
-            import traceback; traceback.print_exc()
-            return jsonify({'success': False, 'message': str(e)}), 500
+    try:
+        from backend.routes.us05_upload_routes import upload_bp
+        app.register_blueprint(upload_bp)
+        print("✅ upload_bp registered successfully")
+    except Exception as e:
+        print(f"❌ upload_bp failed: {e}")
 
-    # Debug endpoint to check JWT configuration
-    @app.route('/api/debug/jwt', methods=['GET'])
-    def debug_jwt():
-        """Debug JWT configuration"""
-        return jsonify({
-            'secret_key_first_10': app.config.get('SECRET_KEY', 'NOT_SET')[:10],
-            'jwt_secret_key_first_10': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10],
-            'keys_match': app.config.get('SECRET_KEY') == app.config.get('JWT_SECRET_KEY'),
-            'env_secret_key': os.getenv('SECRET_KEY', 'NOT_SET')[:10],
-            'env_jwt_secret_key': os.getenv('JWT_SECRET_KEY', 'NOT_SET')[:10],
-        })
+    try:
+        from backend.routes.us05_jd_routes import jd_bp
+        app.register_blueprint(jd_bp)
+        print("✅ jd_bp registered successfully")
+    except Exception as e:
+        print(f"❌ jd_bp failed: {e}")
 
-    # Test JWT generation and verification in same request
-    @app.route('/api/debug/jwt-test', methods=['GET'])
-    def debug_jwt_test():
-        """Test JWT generation and verification"""
-        from flask_jwt_extended import create_access_token, decode_token
-        try:
-            # Generate a test token
-            test_token = create_access_token(
-                identity=str(999),  # Convert to string
-                additional_claims={'test': 'value'}
-            )
+    try:
+        from backend.routes.us06_matching_routes import matching_bp
+        app.register_blueprint(matching_bp)
+        print("✅ matching_bp registered successfully")
+    except Exception as e:
+        print(f"❌ matching_bp failed: {e}")
 
-            # Try to decode it immediately
-            decoded = decode_token(test_token)
+    try:
+        from backend.routes.us07_suggestions_routes import suggestions_bp
+        app.register_blueprint(suggestions_bp)
+        print("✅ suggestions_bp registered successfully")
+    except Exception as e:
+        print(f"❌ suggestions_bp failed: {e}")
 
-            return jsonify({
-                'success': True,
-                'token_generated': True,
-                'token_length': len(test_token),
-                'token_decoded': True,
-                'decoded_sub': decoded.get('sub'),
-                'decoded_test': decoded.get('test'),
-                'jwt_secret_used': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]
-            })
-        except Exception as e:
-            return jsonify({
-                'success': False,
-                'error': str(e),
-                'jwt_secret_used': app.config.get('JWT_SECRET_KEY', 'NOT_SET')[:10]
-            })
+    try:
+        from backend.routes.us10_history_routes import history_bp
+        app.register_blueprint(history_bp)
+        print("✅ history_bp registered successfully")
+    except Exception as e:
+        print(f"❌ history_bp failed: {e}")
+
+    try:
+        from backend.routes.us10_account_routes import account_bp
+        app.register_blueprint(account_bp)
+        print("✅ account_bp registered successfully")
+    except Exception as e:
+        print(f"❌ account_bp failed: {e}")
 
     print("✅ Flask app created successfully")
 
@@ -252,7 +247,6 @@ def create_app():
 
 def main():
     """Main application entry point"""
-    print("🧺t" + "=" * 50 + "🧺")
     print("🚀 Starting Dr. Resume Application")
     print("=" * 52)
 

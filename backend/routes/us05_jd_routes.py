@@ -15,12 +15,18 @@ keyword_parser = KeywordParser()
 def upload_job_description():
     """
     Upload/create a new job description
-    Expected JSON payload:
+    Supports both JSON payload and file upload (DOCX)
+
+    For JSON:
     {
         "title": "Software Engineer",
         "company_name": "Tech Corp",
         "job_text": "We are looking for a skilled software engineer..."
     }
+
+    For file upload:
+    Content-Type: multipart/form-data
+    Fields: title, company_name, job_file (DOCX)
     """
     try:
         current_user_id = get_jwt_identity()
@@ -32,19 +38,65 @@ def upload_job_description():
                 'message': 'User not found'
             }), 404
         
-        # Get JSON data from request
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'message': 'No data provided'
-            }), 400
-        
-        # Extract fields
-        title = data.get('title', '').strip()
-        company_name = data.get('company_name', '').strip()
-        job_text = data.get('job_text', '').strip()
+        # Check if this is a file upload or JSON request
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # Handle file upload
+            title = request.form.get('title', '').strip()
+            company_name = request.form.get('company_name', '').strip()
+
+            # Check if file is present
+            if 'job_file' not in request.files:
+                return jsonify({
+                    'success': False,
+                    'message': 'No job description file provided'
+                }), 400
+
+            file = request.files['job_file']
+
+            if file.filename == '':
+                return jsonify({
+                    'success': False,
+                    'message': 'No file selected'
+                }), 400
+
+            # Check file type
+            if not file.filename.lower().endswith('.docx'):
+                return jsonify({
+                    'success': False,
+                    'message': 'Only DOCX files are supported for file upload'
+                }), 400
+
+            # Extract text from DOCX file
+            try:
+                from backend.services.file_parser import FileParser
+                success, job_text, error = FileParser.extract_text_from_docx(file)
+
+                if not success:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Could not extract text from the uploaded file: {error}'
+                    }), 400
+
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'message': f'Error processing file: {str(e)}'
+                }), 400
+
+        else:
+            # Handle JSON request
+            data = request.get_json()
+
+            if not data:
+                return jsonify({
+                    'success': False,
+                    'message': 'No data provided'
+                }), 400
+
+            # Extract fields
+            title = data.get('title', '').strip()
+            company_name = data.get('company_name', '').strip()
+            job_text = data.get('job_text', '').strip()
         
         # Validate job description
         validation_errors = JobDescription.validate_job_description(title, job_text, company_name)
@@ -81,6 +133,8 @@ def upload_job_description():
         except Exception as keyword_error:
             current_app.logger.error(f"Failed to extract keywords for job description {job_description.id}: {keyword_error}")
             # Don't fail the creation if keyword extraction fails
+
+        # Note: Suggestions are now generated manually by clicking buttons, not automatically
 
         return jsonify({
             'success': True,
