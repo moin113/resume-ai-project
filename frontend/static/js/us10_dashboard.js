@@ -111,9 +111,23 @@ function addEventListeners() {
 }
 
 function updateUserGreeting(userData) {
+    console.log('👤 Updating user greeting with data:', userData);
+
+    // Update welcome title with user's first name
+    const welcomeTitleElement = document.querySelector('.welcome-title');
+    if (welcomeTitleElement && userData.first_name) {
+        welcomeTitleElement.textContent = `Welcome back, ${userData.first_name}`;
+        console.log(`✅ Updated welcome title to: Welcome back, ${userData.first_name}`);
+    } else {
+        console.log('❌ Could not update welcome title - element or first_name not found');
+        console.log('Element found:', !!welcomeTitleElement);
+        console.log('First name:', userData.first_name);
+    }
+
+    // Also update any user greeting elements if they exist
     const greetingElement = document.querySelector('.user-greeting');
-    if (greetingElement && userData.name) {
-        greetingElement.textContent = `Hi, ${userData.name}!`;
+    if (greetingElement && userData.first_name) {
+        greetingElement.textContent = `Hi, ${userData.first_name}!`;
     }
 }
 
@@ -217,9 +231,9 @@ function loadRecentScanHistory() {
                 fileName: recentScan.resume_title || 'Resume',
                 jobDescription: `${recentScan.job_title || 'Job Description'} • ${recentScan.company_name || 'Company'}`,
                 scanDate: new Date(recentScan.created_at).toLocaleDateString(),
-                matchPercentage: recentScan.match_score || 0,
-                keywordCount: `${recentScan.keyword_match_count || 0} keywords`,
-                keywordBreakdown: recentScan.top_keywords || []
+                matchPercentage: Math.round(recentScan.match_score || 0),
+                keywordCount: `${recentScan.match_score || 0}%`,
+                keywordBreakdown: [] // Will be populated from detailed analysis if needed
             };
 
             console.log('📊 Formatted scan data:', scanData);
@@ -264,7 +278,7 @@ function updateScanCard(scanData) {
     // Update keyword count
     const keywordCountElement = document.querySelector('.keyword-count');
     if (keywordCountElement) {
-        keywordCountElement.textContent = `${scanData.keywordCount} keywords`;
+        keywordCountElement.textContent = scanData.keywordCount;
     }
     
     // Update keyword breakdown
@@ -620,6 +634,9 @@ function handleFileSelect(event) {
                     loadSavedResumes();
                     loadRecentScanHistory();
 
+                    // Calculate matching score if both resume and JD exist
+                    calculateMatchingScoreIfReady();
+
                     // DO NOT auto-load suggestions - user must click the buttons manually
                     console.log('📝 Resume uploaded successfully. User can now generate suggestions manually.');
                 } else if (result) {
@@ -723,6 +740,9 @@ function saveJobDescription() {
             // Clear the textarea
             textarea.value = '';
             toggleSaveButton();
+
+            // DO NOT auto-calculate matching score - user must click the button manually
+            console.log('📝 Job description saved successfully. User can now calculate matching score manually.');
         } else {
             showNotification(data.message || 'Failed to save job description', 'error');
         }
@@ -730,6 +750,106 @@ function saveJobDescription() {
     .catch(error => {
         console.error('Error saving job description:', error);
         showNotification('Failed to save job description', 'error');
+    });
+}
+
+// Matching Score Calculation
+function generateMatchingScore() {
+    console.log('🎯 User clicked Calculate Matching Score');
+
+    // Show matching score section first
+    const matchingSection = document.getElementById('matching-score-section');
+    if (matchingSection) {
+        matchingSection.style.display = 'block';
+    }
+
+    // Show loading state (we can add this later)
+    showNotification('Calculating matching score...', 'info');
+
+    calculateMatchingScoreIfReady();
+}
+
+function calculateMatchingScoreIfReady() {
+    console.log('🎯 Checking if ready to calculate matching score...');
+
+    const token = localStorage.getItem('dr_resume_token');
+
+    // Get latest resume and job description
+    Promise.all([
+        fetch(`${API_BASE_URL}/api/resumes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json()),
+
+        fetch(`${API_BASE_URL}/api/job_descriptions`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+    ])
+    .then(([resumesData, jdData]) => {
+        if (resumesData.success && jdData.success &&
+            resumesData.resumes.length > 0 && jdData.job_descriptions.length > 0) {
+
+            const latestResume = resumesData.resumes[0];
+            const latestJD = jdData.job_descriptions[0];
+
+            // Check if both have keywords extracted
+            if (latestResume.keywords_extracted && latestJD.keywords_extracted) {
+                console.log(`🎯 Calculating matching score for resume ${latestResume.id} vs JD ${latestJD.id}`);
+
+                // Calculate matching score
+                fetch(`${API_BASE_URL}/api/calculate_match`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        resume_id: latestResume.id,
+                        job_description_id: latestJD.id
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Matching score calculated:', data);
+
+                        // Show matching score section with the calculated data
+                        showMatchingScore({
+                            overall_score: data.detailed_scores.overall_score,
+                            technical_score: data.detailed_scores.technical_score,
+                            soft_skills_score: data.detailed_scores.soft_skills_score,
+                            other_keywords_score: data.detailed_scores.other_keywords_score,
+                            matched_keywords: data.keyword_analysis.matched_keywords,
+                            total_resume_keywords: data.keyword_analysis.total_resume_keywords,
+                            total_jd_keywords: data.keyword_analysis.total_jd_keywords
+                        });
+
+                        showNotification('Matching score calculated successfully!', 'success');
+                    } else {
+                        console.error('Failed to calculate matching score:', data.message);
+                        showNotification('Failed to calculate matching score', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error calculating matching score:', error);
+                    showNotification('Error calculating matching score', 'error');
+                });
+            } else {
+                console.log('⏳ Keywords not extracted yet for both resume and JD');
+            }
+        } else {
+            console.log('📭 No resume or job description found');
+        }
+    })
+    .catch(error => {
+        console.error('Error checking for resume/JD:', error);
     });
 }
 
@@ -1071,12 +1191,126 @@ function showEmptySuggestions(message) {
     }
 }
 
+// Matching Score Functions
+function showMatchingScore(matchingData) {
+    console.log('🎯 Showing matching score:', matchingData);
+
+    const matchingSection = document.getElementById('matching-score-section');
+    if (matchingSection) {
+        matchingSection.style.display = 'block';
+
+        // Update overall score
+        const overallScore = Math.round(matchingData.overall_score || 0);
+        updateOverallScore(overallScore);
+
+        // Update detailed scores
+        updateDetailedScores({
+            technical: Math.round(matchingData.technical_score || 0),
+            softSkills: Math.round(matchingData.soft_skills_score || 0),
+            otherKeywords: Math.round(matchingData.other_keywords_score || 0)
+        });
+
+        // Update keyword analysis
+        updateKeywordAnalysis({
+            matched: matchingData.matched_keywords || 0,
+            resume: matchingData.total_resume_keywords || 0,
+            jobDescription: matchingData.total_jd_keywords || 0
+        });
+
+        // Scroll to matching score section
+        matchingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function updateOverallScore(score) {
+    const scoreValueElement = document.getElementById('overall-score-value');
+    const progressElement = document.getElementById('overall-progress');
+    const categoryElement = document.getElementById('score-category');
+
+    if (scoreValueElement) {
+        scoreValueElement.textContent = `${score}%`;
+    }
+
+    if (progressElement) {
+        progressElement.style.setProperty('--progress', score);
+    }
+
+    if (categoryElement) {
+        const category = getScoreCategory(score);
+        categoryElement.textContent = category.label;
+        categoryElement.className = `score-category ${category.class}`;
+    }
+}
+
+function updateDetailedScores(scores) {
+    // Technical Skills
+    const technicalScoreElement = document.getElementById('technical-score');
+    const technicalFillElement = document.getElementById('technical-fill');
+    if (technicalScoreElement) technicalScoreElement.textContent = `${scores.technical}%`;
+    if (technicalFillElement) {
+        setTimeout(() => {
+            technicalFillElement.style.width = `${scores.technical}%`;
+        }, 300);
+    }
+
+    // Soft Skills
+    const softSkillsScoreElement = document.getElementById('soft-skills-score');
+    const softSkillsFillElement = document.getElementById('soft-skills-fill');
+    if (softSkillsScoreElement) softSkillsScoreElement.textContent = `${scores.softSkills}%`;
+    if (softSkillsFillElement) {
+        setTimeout(() => {
+            softSkillsFillElement.style.width = `${scores.softSkills}%`;
+        }, 500);
+    }
+
+    // Other Keywords
+    const otherKeywordsScoreElement = document.getElementById('other-keywords-score');
+    const otherKeywordsFillElement = document.getElementById('other-keywords-fill');
+    if (otherKeywordsScoreElement) otherKeywordsScoreElement.textContent = `${scores.otherKeywords}%`;
+    if (otherKeywordsFillElement) {
+        setTimeout(() => {
+            otherKeywordsFillElement.style.width = `${scores.otherKeywords}%`;
+        }, 700);
+    }
+}
+
+function updateKeywordAnalysis(keywords) {
+    const matchedElement = document.getElementById('matched-keywords');
+    const resumeElement = document.getElementById('resume-keywords');
+    const jdElement = document.getElementById('jd-keywords');
+
+    if (matchedElement) matchedElement.textContent = keywords.matched;
+    if (resumeElement) resumeElement.textContent = keywords.resume;
+    if (jdElement) jdElement.textContent = keywords.jobDescription;
+}
+
+function getScoreCategory(score) {
+    if (score >= 80) {
+        return { label: 'Excellent Match', class: 'excellent' };
+    } else if (score >= 60) {
+        return { label: 'Good Match', class: 'good' };
+    } else if (score >= 40) {
+        return { label: 'Fair Match', class: 'fair' };
+    } else {
+        return { label: 'Needs Improvement', class: 'poor' };
+    }
+}
+
+function hideMatchingScore() {
+    const matchingSection = document.getElementById('matching-score-section');
+    if (matchingSection) {
+        matchingSection.style.display = 'none';
+    }
+}
+
 // Export functions for global access
 window.DashboardApp = {
     showNotification,
     updateUserGreeting,
     loadDashboardStats,
-    loadRecentScanHistory
+    loadRecentScanHistory,
+    showMatchingScore,
+    hideMatchingScore
 };
 
 // Make functions globally accessible

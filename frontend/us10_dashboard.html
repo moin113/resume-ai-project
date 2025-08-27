@@ -16,9 +16,9 @@
         </div>
         
         <nav class="dashboard-nav">
-            <a href="#" class="nav-item active">Dashboard</a>
-            <a href="#" class="nav-item">Builder</a>
-            <a href="#" class="nav-item">Jobs</a>
+            <a href="us10_dashboard.html" class="nav-item active">Dashboard</a>
+            <a href="us10_scan_history.html" class="nav-item">Scan History</a>
+            <a href="us10_account.html" class="nav-item">Account</a>
             <span class="user-greeting">Hi, there!</span>
             <button class="logout-btn" onclick="handleLogout()" title="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -58,7 +58,10 @@
 
             <!-- Recent Scan History -->
             <section class="recent-scan-history">
-                <h2 class="section-title">Recent Scan History</h2>
+                <div class="section-header-with-link">
+                    <h2 class="section-title">Recent Scan History</h2>
+                    <a href="us10_scan_history.html" class="view-all-link">View All →</a>
+                </div>
                 
                 <div class="scan-card">
                     <div class="scan-header">
@@ -188,6 +191,88 @@
                     </div>
                 </div>
 
+                <!-- Matching Score Section -->
+                <div class="matching-score-section" id="matching-score-section" style="display: none;">
+                    <div class="section-header">
+                        <div class="section-icon">🎯</div>
+                        <h3 class="section-title">Matching Score Analysis</h3>
+                    </div>
+
+                    <div class="matching-score-content">
+                        <div class="overall-score-container">
+                            <div class="circular-progress" id="overall-progress">
+                                <div class="progress-text">
+                                    <span class="score-value" id="overall-score-value">0%</span>
+                                    <span class="score-label">Overall Match</span>
+                                </div>
+                            </div>
+                            <div class="score-category" id="score-category">
+                                Getting Started
+                            </div>
+                        </div>
+
+                        <div class="detailed-scores">
+                            <div class="score-breakdown">
+                                <div class="score-item">
+                                    <div class="score-item-header">
+                                        <span class="score-item-label">Technical Skills</span>
+                                        <span class="score-item-value" id="technical-score">0%</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="technical-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="score-item">
+                                    <div class="score-item-header">
+                                        <span class="score-item-label">Soft Skills</span>
+                                        <span class="score-item-value" id="soft-skills-score">0%</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="soft-skills-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="score-item">
+                                    <div class="score-item-header">
+                                        <span class="score-item-label">Other Keywords</span>
+                                        <span class="score-item-value" id="other-keywords-score">0%</span>
+                                    </div>
+                                    <div class="score-bar">
+                                        <div class="score-fill" id="other-keywords-fill" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="keyword-analysis">
+                                <h4>Keyword Analysis</h4>
+                                <div class="keyword-stats">
+                                    <div class="keyword-stat">
+                                        <span class="stat-label">Total Keywords Matched</span>
+                                        <span class="stat-value" id="matched-keywords">0</span>
+                                    </div>
+                                    <div class="keyword-stat">
+                                        <span class="stat-label">Resume Keywords</span>
+                                        <span class="stat-value" id="resume-keywords">0</span>
+                                    </div>
+                                    <div class="keyword-stat">
+                                        <span class="stat-label">Job Description Keywords</span>
+                                        <span class="stat-value" id="jd-keywords">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Matching Score Action Button -->
+                    <div class="matching-score-actions">
+                        <button class="action-btn matching" onclick="generateMatchingScore()">
+                            <span class="btn-icon">🎯</span>
+                            Calculate Matching Score
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Suggestions Section -->
                 <div class="suggestions-section" id="suggestions-section" style="display: none;">
                     <div class="section-header">
@@ -231,6 +316,40 @@
             </section>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="brand-icon">🤖</div>
+                    <span class="brand-text">ResumeDoctor AI</span>
+                    <p>The most advanced AI-powered resume optimization platform. Get 3x more interviews with intelligent ATS optimization.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="link-group">
+                        <h4>Product</h4>
+                        <a href="#" class="footer-link">Resume Scanner</a>
+                        <a href="#" class="footer-link">Resume Builder</a>
+                        <a href="#" class="footer-link">Cover Letters</a>
+                        <a href="#" class="footer-link">LinkedIn Optimizer</a>
+                        <a href="#" class="footer-link">Job Tracker</a>
+                    </div>
+                    <div class="link-group">
+                        <h4>Support</h4>
+                        <a href="#" class="footer-link">Help Center</a>
+                        <a href="#" class="footer-link">Contact Us</a>
+                        <a href="#" class="footer-link">Privacy Policy</a>
+                        <a href="#" class="footer-link">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ResumeDoctor AI. All rights reserved.</p>
+                <p>Trusted by 50,000+ job seekers</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="static/js/config.js"></script>
     <script src="static/js/us10_dashboard.js"></script>

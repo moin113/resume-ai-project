@@ -46,7 +46,11 @@ def create_app():
     # US-10: Add all main frontend HTML routes
     @app.route('/history')
     def serve_history():
-        return render_template('us10_history.html')
+        return render_template('us10_scan_history.html')
+
+    @app.route('/us10_scan_history.html')
+    def serve_scan_history_html():
+        return render_template('us10_scan_history.html')
 
     @app.route('/login')
     def serve_login():
