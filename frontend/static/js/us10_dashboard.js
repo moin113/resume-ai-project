@@ -1,8 +1,9 @@
 // Resume Doctor.Ai - Clean Dashboard JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🤖 Resume Doctor.Ai Dashboard Loaded');
-    
+    console.log('🤖 Resume Doctor.Ai Dashboard Loaded - Version 1.1');
+    console.log('🔧 All fixes applied: scan count, textarea height, file upload, sample scan, documentation');
+
     // Check authentication
     const token = localStorage.getItem('dr_resume_token');
     if (!token) {
@@ -13,7 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Verify token is valid by making a test API call
     verifyTokenAndProceed();
-    
+
+    // Load scan status
+    loadScanStatus();
+
     // Add event listeners
     addEventListeners();
 });
@@ -60,24 +64,919 @@ function initializeDashboard() {
     const userData = JSON.parse(localStorage.getItem('dr_resume_user') || '{}');
     updateUserGreeting(userData);
 
-    // Load dashboard stats
-    loadDashboardStats();
+    // Initialize scan count
+    initializeScanCount();
 
     // Load recent scan history
     loadRecentScanHistory();
 
-    // Load saved resumes and job descriptions
-    loadSavedResumes();
-    loadSavedJobDescriptions();
+    // Load last used resume if available
+    loadLastUsedResume();
 
-    // DO NOT auto-load suggestions - user must manually select resume and generate suggestions
-    console.log('📝 Suggestions will be generated only when user clicks the buttons');
-
-    // Hide suggestions section initially
-    const suggestionsSection = document.getElementById('suggestions-section');
-    if (suggestionsSection) {
-        suggestionsSection.style.display = 'none';
+    // Hide pro plans section initially
+    const proPlansSection = document.getElementById('pro-plans-section');
+    if (proPlansSection) {
+        proPlansSection.style.display = 'none';
     }
+}
+
+// Initialize scan count - now handled by server
+function initializeScanCount() {
+    console.log('🔧 initializeScanCount() called - using server-based tracking');
+    // Scan count is now managed by the server via loadScanStatus()
+    // Remove any old localStorage scan tracking
+    localStorage.removeItem('dr_resume_scan_count');
+    console.log('✅ Removed old localStorage scan tracking');
+}
+
+// Debug function to reload scan status from server
+function debugResetScanCount() {
+    console.log('🔧 Debug: Reloading scan status from server');
+    loadScanStatus();
+}
+
+// Make debug function available globally
+window.debugResetScanCount = debugResetScanCount;
+
+// Load last used resume on page load
+function loadLastUsedResume() {
+    const lastUsedResumeId = localStorage.getItem('last_used_resume_id');
+    if (!lastUsedResumeId) {
+        console.log('📝 No last used resume found');
+        return;
+    }
+
+    const token = localStorage.getItem('dr_resume_token');
+
+    fetch(`${API_BASE_URL}/api/resumes/${lastUsedResumeId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 401) {
+            clearTokens();
+            window.location.href = 'us10_login.html';
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.resume) {
+            // Populate the resume textarea with extracted text
+            const resumeTextarea = document.getElementById('resume-text');
+            if (resumeTextarea && data.resume.extracted_text) {
+                resumeTextarea.value = data.resume.extracted_text;
+            }
+
+            // Update the uploaded file display
+            updateUploadedFileDisplay(data.resume.original_filename || data.resume.title || 'Last Used Resume');
+
+            console.log(`📝 Loaded last used resume: ${data.resume.title || 'Untitled Resume'}`);
+        } else {
+            // Resume not found, clear the stored ID
+            localStorage.removeItem('last_used_resume_id');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading last used resume:', error);
+        // Clear the stored ID if there's an error
+        localStorage.removeItem('last_used_resume_id');
+    });
+}
+
+// File upload handlers
+function triggerFileUpload() {
+    // Reset the upload display when triggering new upload
+    const uploadContent = document.getElementById('upload-content');
+    const uploadedFileDisplay = document.getElementById('uploaded-file-display');
+
+    if (uploadContent && uploadedFileDisplay) {
+        uploadContent.style.display = 'flex';
+        uploadedFileDisplay.style.display = 'none';
+    }
+
+    // Clear the file input to allow selecting the same file again
+    const fileInput = document.getElementById('resume-file');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    document.getElementById('resume-file').click();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        console.log('File selected:', file.name);
+
+        // Show uploaded file info in center
+        const uploadContent = document.getElementById('upload-content');
+        const uploadedFileDisplay = document.getElementById('uploaded-file-display');
+        const fileNameCenterEl = document.getElementById('uploaded-file-name-center');
+
+        if (uploadContent && uploadedFileDisplay && fileNameCenterEl) {
+            // Hide the upload content and show the uploaded file display
+            uploadContent.style.display = 'none';
+            uploadedFileDisplay.style.display = 'flex';
+            fileNameCenterEl.textContent = file.name;
+            console.log('✅ File display updated in center:', file.name);
+        }
+
+        // Also update the old display for backward compatibility
+        const uploadedResumeEl = document.getElementById('uploaded-resume');
+        const fileNameEl = document.getElementById('uploaded-file-name');
+
+        if (uploadedResumeEl && fileNameEl) {
+            fileNameEl.textContent = file.name;
+            uploadedResumeEl.style.display = 'block';
+        }
+
+        // Clear the textarea since file is uploaded
+        const resumeTextarea = document.getElementById('resume-text');
+        if (resumeTextarea) {
+            resumeTextarea.value = '';
+        }
+    }
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        const file = files[0];
+        // Simulate file input change
+        const fileInput = document.getElementById('resume-file');
+        fileInput.files = files;
+        handleFileSelect({ target: { files: [file] } });
+    }
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+}
+
+// Scan functionality
+function performScan() {
+    console.log('🔍 Starting performScan function...');
+
+    // Get resume text from textarea or uploaded file
+    let resumeText = '';
+    const resumeTextarea = document.getElementById('resume-text');
+    if (resumeTextarea) {
+        resumeText = resumeTextarea.value.trim();
+    }
+
+    // Get job description text from textarea
+    let jobDescription = '';
+    const jobTextarea = document.querySelector('.job-textarea');
+    if (jobTextarea) {
+        jobDescription = jobTextarea.value.trim();
+    }
+
+    const uploadedFile = document.getElementById('resume-file').files[0];
+
+    console.log('📝 Initial data check:', {
+        resumeTextLength: resumeText.length,
+        jobDescriptionLength: jobDescription.length,
+        hasUploadedFile: !!uploadedFile
+    });
+
+    // If text areas are empty, try to get data from saved resumes/JDs
+    if (!resumeText && !uploadedFile) {
+        console.log('📝 No resume text or file, checking for saved resumes...');
+        // Try to get the most recent resume text
+        const token = localStorage.getItem('dr_resume_token');
+
+        fetch(`${API_BASE_URL}/api/resumes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.resumes && data.resumes.length > 0) {
+                const latestResume = data.resumes[0];
+                console.log('📝 Found saved resume:', latestResume.title);
+
+                // Get resume details with text
+                return fetch(`${API_BASE_URL}/api/resumes/${latestResume.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } else {
+                throw new Error('No saved resumes found');
+            }
+        })
+        .then(response => response.json())
+        .then(resumeData => {
+            if (resumeData.success && resumeData.resume.extracted_text) {
+                resumeText = resumeData.resume.extracted_text;
+                console.log('📝 Got resume text from saved resume, length:', resumeText.length);
+                continueWithScan(resumeText, jobDescription);
+            } else {
+                throw new Error('Could not get resume text');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error getting saved resume:', error);
+            showNotification('Please upload a resume or enter resume text', 'error');
+        });
+        return; // Exit here, continueWithScan will be called asynchronously
+    }
+
+    if (!jobDescription) {
+        console.log('📝 No job description text, checking for saved JDs...');
+        // Try to get the most recent job description
+        const token = localStorage.getItem('dr_resume_token');
+
+        fetch(`${API_BASE_URL}/api/job_descriptions`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.job_descriptions && data.job_descriptions.length > 0) {
+                const latestJD = data.job_descriptions[0];
+                console.log('📝 Found saved JD:', latestJD.title);
+
+                // Get JD details with text
+                return fetch(`${API_BASE_URL}/api/job_descriptions/${latestJD.id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } else {
+                throw new Error('No saved job descriptions found');
+            }
+        })
+        .then(response => response.json())
+        .then(jdData => {
+            if (jdData.success && jdData.job_description.job_text) {
+                jobDescription = jdData.job_description.job_text;
+                console.log('📝 Got JD text from saved JD, length:', jobDescription.length);
+                continueWithScan(resumeText, jobDescription);
+            } else {
+                throw new Error('Could not get job description text');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error getting saved job description:', error);
+            showNotification('Please enter a job description', 'error');
+        });
+        return; // Exit here, continueWithScan will be called asynchronously
+    }
+
+    // If we have both texts, continue with scan
+    continueWithScan(resumeText, jobDescription);
+}
+
+function continueWithScan(resumeText, jobDescription) {
+    console.log('📝 Continuing with scan:', {
+        resumeTextLength: resumeText.length,
+        jobDescriptionLength: jobDescription.length
+    });
+
+    // Only use sample data if both fields are completely empty (for testing)
+    if (!resumeText) {
+        console.log('📝 Using sample resume data for testing');
+        resumeText = `John Doe
+Software Engineer
+Email: john.doe@email.com | Phone: (555) 123-4567
+
+PROFESSIONAL SUMMARY
+Experienced software engineer with 5+ years developing web applications using JavaScript, Python, and React. Led teams of 3-5 developers and increased application performance by 40%. Strong background in agile development and problem-solving.
+
+WORK EXPERIENCE
+Senior Software Engineer | TechCorp Inc. | 2020-2023
+• Developed and maintained React applications serving 100,000+ users
+• Implemented REST APIs using Python and Django
+• Led agile development team and improved deployment efficiency by 60%
+• Collaborated with cross-functional teams on project management initiatives
+
+Software Developer | StartupXYZ | 2018-2020
+• Built responsive web applications using JavaScript and HTML/CSS
+• Worked with SQL databases and optimized query performance
+• Participated in code reviews and mentored junior developers
+• Contributed to project management and time management processes
+
+EDUCATION
+Bachelor of Science in Computer Science | University of Technology | 2018
+
+SKILLS
+Technical: JavaScript, Python, React, SQL, HTML, CSS, Git, Agile, REST APIs
+Soft Skills: Leadership, Communication, Problem Solving, Teamwork, Project Management`;
+    }
+
+    if (!jobDescription) {
+        console.log('📝 Using sample job description for testing');
+        jobDescription = `Senior Software Engineer Position
+
+We are seeking a Senior Software Engineer to join our dynamic team. The ideal candidate will have strong experience in modern web development technologies and leadership skills.
+
+REQUIRED SKILLS:
+• 5+ years of experience with JavaScript and Python
+• Proficiency in React and modern frontend frameworks
+• Experience with SQL databases and API development
+• Strong problem-solving and analytical thinking abilities
+• Excellent communication and leadership skills
+• Experience with agile development methodologies
+• Project management experience preferred
+
+RESPONSIBILITIES:
+• Lead development of web applications using React and Python
+• Collaborate with cross-functional teams on product development
+• Mentor junior developers and provide technical guidance
+• Implement best practices for code quality and performance
+• Participate in agile ceremonies and project planning
+• Work with AWS cloud services and DevOps practices
+
+QUALIFICATIONS:
+• Bachelor's degree in Computer Science or related field
+• 5+ years of software development experience
+• Strong communication and teamwork skills
+• Experience with version control (Git) and CI/CD
+• Knowledge of database design and optimization
+• Customer-focused mindset and innovation thinking`;
+    }
+
+    // Final validation before sending to API
+    if (!resumeText || !jobDescription) {
+        console.error('❌ Missing required data:', {
+            resumeTextLength: resumeText ? resumeText.length : 0,
+            jobDescriptionLength: jobDescription ? jobDescription.length : 0
+        });
+        showNotification('Both resume text and job description text are required', 'error');
+        return;
+    }
+
+    console.log('✅ Data validation passed:', {
+        resumeTextLength: resumeText.length,
+        jobDescriptionLength: jobDescription.length
+    });
+
+    // Check scan status from server first
+    const token = localStorage.getItem('dr_resume_token');
+
+    // Show loading state
+    showNotification('Checking scan availability...', 'info');
+
+    // First check if user can perform scan
+    fetch(`${API_BASE_URL}/api/scan_status`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 401) {
+            clearTokens();
+            window.location.href = 'us10_login.html';
+            return;
+        }
+        return response.json();
+    })
+    .then(scanStatusData => {
+        if (!scanStatusData || !scanStatusData.success) {
+            showNotification('Error checking scan status', 'error');
+            return;
+        }
+
+        if (!scanStatusData.scan_status.can_scan) {
+            showNotification('No free scans remaining. Please upgrade to premium for unlimited scans.', 'warning');
+            showUpgradeModal();
+            return;
+        }
+
+        // User can scan, proceed with the analysis
+        performActualScan(resumeText, jobDescription, token);
+    })
+    .catch(error => {
+        console.error('Error checking scan status:', error);
+        showNotification('Error checking scan status', 'error');
+    });
+}
+
+function performActualScan(resumeText, jobDescription, token) {
+    console.log('🔍 Performing scan...');
+    showNotification('Performing enhanced LLM analysis...', 'info');
+
+    fetch(`${API_BASE_URL}/api/analyze_realtime`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            resume_text: resumeText,
+            job_description_text: jobDescription
+        })
+    })
+    .then(response => {
+        if (response.status === 401) {
+            clearTokens();
+            window.location.href = 'us10_login.html';
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('📊 Enhanced LLM Analysis Result:', data.analysis);
+
+            // Track the last used resume if there's an uploaded file
+            const uploadedFile = document.getElementById('resume-file').files[0];
+            if (uploadedFile) {
+                // If there's an uploaded file, we should track it as the last used
+                // This would require implementing resume upload tracking
+                console.log('📝 Tracking uploaded file as last used resume');
+            }
+
+            // Store enhanced scan data for results page
+            const scanData = {
+                resumeText: resumeText,
+                resumeFile: uploadedFile ? uploadedFile.name : null,
+                jobDescription: jobDescription,
+                timestamp: new Date().toISOString(),
+                llmAnalysis: data.analysis,
+                analysisType: 'enhanced_llm'
+            };
+
+            localStorage.setItem('currentScanData', JSON.stringify(scanData));
+            showNotification('✅ Enhanced LLM analysis completed!', 'success');
+
+            // Update scan status if provided in response
+            if (data.scan_status) {
+                displayScanStatus(data.scan_status);
+            } else {
+                // Reload scan status from server
+                loadScanStatus();
+            }
+
+            // Navigate to results page
+            window.location.href = 'us10_results.html';
+        } else {
+            console.error('LLM Analysis failed:', data.message);
+            showNotification(data.message || 'LLM analysis failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('❌ LLM Analysis error:', error);
+        showNotification('Error performing LLM analysis', 'error');
+    });
+}
+
+function showUpgradeModal() {
+    const proPlansSection = document.getElementById('pro-plans-section');
+    if (proPlansSection) {
+        proPlansSection.style.display = 'block';
+        proPlansSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function showUpgradePrompt() {
+    console.log('⚠️ Low scan count, showing upgrade prompt');
+
+    // Show a more prominent notification
+    showNotification('⚠️ You\'re running low on free scans! Consider upgrading to premium for unlimited scans.', 'warning');
+
+    // Highlight the upgrade button
+    const upgradeBtn = document.querySelector('.upgrade-btn');
+    if (upgradeBtn) {
+        upgradeBtn.style.backgroundColor = '#f59e0b';
+        upgradeBtn.style.color = 'white';
+        upgradeBtn.style.transform = 'scale(1.05)';
+        upgradeBtn.style.transition = 'all 0.3s ease';
+
+        // Reset styling after 3 seconds
+        setTimeout(() => {
+            upgradeBtn.style.transform = 'scale(1)';
+        }, 3000);
+    }
+
+    // Scroll to pro plans section briefly
+    const proPlansSection = document.getElementById('pro-plans-section');
+    if (proPlansSection) {
+        proPlansSection.style.display = 'block';
+        proPlansSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Hide it again after 5 seconds
+        setTimeout(() => {
+            proPlansSection.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function togglePowerEdit() {
+    console.log('⚡ Power Edit toggled');
+    alert('Power Edit feature coming soon!');
+}
+
+function showSavedResumes() {
+    console.log('📁 Show saved resumes');
+
+    const token = localStorage.getItem('dr_resume_token');
+
+    // Create modal for saved resumes
+    const modal = createSavedResumesModal();
+    document.body.appendChild(modal);
+
+    // Load saved resumes
+    fetch(`${API_BASE_URL}/api/resumes`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.status === 401) {
+            clearTokens();
+            window.location.href = 'us10_login.html';
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success && data.resumes) {
+            displaySavedResumesInModal(data.resumes, modal);
+        } else {
+            displayNoResumesMessage(modal);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading saved resumes:', error);
+        displayErrorMessage(modal);
+    });
+}
+
+function createSavedResumesModal() {
+    const modal = document.createElement('div');
+    modal.className = 'saved-resumes-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Select a Resume</h3>
+                    <button class="close-btn" onclick="closeSavedResumesModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="loading-message">Loading saved resumes...</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .saved-resumes-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .saved-resumes-modal .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .saved-resumes-modal .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .saved-resumes-modal .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .saved-resumes-modal .modal-body {
+            padding: 20px;
+        }
+        .resume-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .resume-item:hover {
+            background-color: #f5f5f5;
+        }
+        .resume-item.last-used {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        .resume-item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .resume-item-details {
+            font-size: 12px;
+            color: #666;
+        }
+        .last-used-badge {
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 10px;
+        }
+    `;
+    document.head.appendChild(style);
+
+    return modal;
+}
+
+function displaySavedResumesInModal(resumes, modal) {
+    const modalBody = modal.querySelector('.modal-body');
+    const lastUsedResumeId = localStorage.getItem('last_used_resume_id');
+
+    if (resumes.length === 0) {
+        modalBody.innerHTML = '<div class="no-resumes-message">No saved resumes found. Upload a resume first!</div>';
+        return;
+    }
+
+    const resumesList = resumes.map(resume => {
+        const isLastUsed = resume.id.toString() === lastUsedResumeId;
+        return `
+            <div class="resume-item ${isLastUsed ? 'last-used' : ''}" onclick="selectResume(${resume.id}, '${resume.title || 'Untitled Resume'}')">
+                <div class="resume-item-name">
+                    ${resume.title || 'Untitled Resume'}
+                    ${isLastUsed ? '<span class="last-used-badge">Last Used</span>' : ''}
+                </div>
+                <div class="resume-item-details">
+                    Uploaded: ${new Date(resume.created_at).toLocaleDateString()}
+                    ${resume.original_filename ? ` • ${resume.original_filename}` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    modalBody.innerHTML = resumesList;
+}
+
+function displayNoResumesMessage(modal) {
+    const modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = '<div class="no-resumes-message">No saved resumes found. Upload a resume first!</div>';
+}
+
+function displayErrorMessage(modal) {
+    const modalBody = modal.querySelector('.modal-body');
+    modalBody.innerHTML = '<div class="error-message">Error loading resumes. Please try again.</div>';
+}
+
+function closeSavedResumesModal() {
+    const modal = document.querySelector('.saved-resumes-modal');
+    if (modal) {
+        document.body.removeChild(modal);
+        // Remove the style element
+        const styles = document.querySelectorAll('style');
+        styles.forEach(style => {
+            if (style.textContent.includes('.saved-resumes-modal')) {
+                document.head.removeChild(style);
+            }
+        });
+    }
+}
+
+function selectResume(resumeId, resumeTitle) {
+    console.log(`Selected resume: ${resumeTitle} (ID: ${resumeId})`);
+
+    // Store the selected resume as the last used
+    localStorage.setItem('last_used_resume_id', resumeId.toString());
+
+    // Get the resume details and populate the textarea
+    const token = localStorage.getItem('dr_resume_token');
+
+    fetch(`${API_BASE_URL}/api/resumes/${resumeId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.resume) {
+            // Populate the resume textarea with extracted text
+            const resumeTextarea = document.getElementById('resume-text');
+            if (resumeTextarea && data.resume.extracted_text) {
+                resumeTextarea.value = data.resume.extracted_text;
+            }
+
+            // Update the uploaded file display
+            updateUploadedFileDisplay(data.resume.original_filename || resumeTitle);
+
+            showNotification(`Resume "${resumeTitle}" loaded successfully!`, 'success');
+        } else {
+            showNotification('Error loading resume details', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading resume details:', error);
+        showNotification('Error loading resume details', 'error');
+    });
+
+    // Close the modal
+    closeSavedResumesModal();
+}
+
+function updateUploadedFileDisplay(filename) {
+    const uploadedFileDiv = document.getElementById('uploaded-resume');
+    const fileNameSpan = document.getElementById('uploaded-file-name');
+
+    if (uploadedFileDiv && fileNameSpan) {
+        fileNameSpan.textContent = filename;
+        uploadedFileDiv.style.display = 'block';
+    }
+}
+
+function viewSampleScan() {
+    console.log('👁️ View sample scan with comprehensive dummy data');
+
+    // Comprehensive sample data that demonstrates real analysis results
+    const sampleScanData = {
+        resumeText: `Sarah Johnson
+Senior Software Engineer
+Email: sarah.johnson@email.com | Phone: (555) 123-4567 | LinkedIn: linkedin.com/in/sarahjohnson
+
+PROFESSIONAL SUMMARY
+Experienced Senior Software Engineer with 6+ years developing scalable web applications using JavaScript, Python, and React. Led cross-functional teams of 5-8 developers and improved application performance by 45%. Strong background in agile development, cloud architecture, and problem-solving.
+
+WORK EXPERIENCE
+Senior Software Engineer | TechCorp Inc. | 2021-2024
+• Developed and maintained React applications serving 250,000+ users
+• Implemented REST APIs using Python, Django, and PostgreSQL
+• Led agile development team and improved deployment efficiency by 65%
+• Collaborated with product managers on feature planning and roadmap
+• Mentored 3 junior developers and conducted code reviews
+
+Software Developer | StartupXYZ | 2019-2021
+• Built responsive web applications using JavaScript, HTML5, and CSS3
+• Worked with SQL databases and optimized query performance by 40%
+• Participated in daily standups and sprint planning meetings
+• Contributed to CI/CD pipeline setup using Jenkins and Docker
+
+Junior Developer | WebSolutions | 2018-2019
+• Developed frontend components using React and Redux
+• Collaborated with UX/UI designers on user interface improvements
+• Fixed bugs and implemented new features based on user feedback
+
+EDUCATION
+Bachelor of Science in Computer Science | University of Technology | 2018
+Relevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering
+
+SKILLS
+Technical: JavaScript, Python, React, Node.js, SQL, PostgreSQL, HTML5, CSS3, Git, Docker, Jenkins, AWS, REST APIs, GraphQL
+Soft Skills: Leadership, Communication, Problem Solving, Teamwork, Project Management, Agile Methodologies`,
+
+        resumeFile: 'Sarah_Johnson_Senior_Software_Engineer.pdf',
+
+        jobDescription: `Senior Software Engineer - Full Stack Development
+TechInnovate Solutions | San Francisco, CA
+
+We are seeking a Senior Software Engineer to join our dynamic engineering team. The ideal candidate will have strong experience in modern web development technologies and leadership skills.
+
+REQUIRED SKILLS:
+• 5+ years of experience with JavaScript and Python
+• Proficiency in React and modern frontend frameworks
+• Experience with SQL databases and API development
+• Strong problem-solving and analytical thinking abilities
+• Excellent communication and leadership skills
+• Experience with agile development methodologies
+• Project management experience preferred
+• Knowledge of cloud platforms (AWS, Azure, or GCP)
+
+RESPONSIBILITIES:
+• Lead development of web applications using React and Python
+• Collaborate with cross-functional teams on product development
+• Mentor junior developers and provide technical guidance
+• Implement best practices for code quality and performance
+• Participate in agile ceremonies and sprint planning
+• Work with AWS cloud services and DevOps practices
+• Design and implement REST APIs and microservices
+• Conduct code reviews and ensure coding standards
+
+QUALIFICATIONS:
+• Bachelor's degree in Computer Science or related field
+• 5+ years of software development experience
+• Strong communication and teamwork skills
+• Experience with version control (Git) and CI/CD pipelines
+• Knowledge of database design and optimization
+• Customer-focused mindset and innovation thinking
+• Experience with Docker and containerization
+• Familiarity with GraphQL and modern API design`,
+
+        matchRate: 87,
+        timestamp: new Date().toISOString(),
+        isSample: true,
+
+        // Detailed analysis results
+        detailedScores: {
+            technical_score: 92,
+            soft_skills_score: 85,
+            other_keywords_score: 83,
+            overall_score: 87
+        },
+
+        keywordAnalysis: {
+            total_resume_keywords: 28,
+            total_jd_keywords: 32,
+            matched_keywords: 24,
+            match_percentage: 75
+        },
+
+        // Sample suggestions data
+        suggestions: [
+            {
+                title: "Add Cloud Platform Certifications",
+                description: "Consider obtaining AWS, Azure, or GCP certifications to strengthen your cloud expertise. The job description emphasizes cloud platform knowledge.",
+                category: "technical_skills",
+                priority: "high",
+                impact: "Increases technical credibility by 15%"
+            },
+            {
+                title: "Highlight GraphQL Experience",
+                description: "If you have GraphQL experience, add it to your skills section. The job mentions familiarity with GraphQL and modern API design.",
+                category: "technical_skills",
+                priority: "medium",
+                impact: "Improves API development profile"
+            },
+            {
+                title: "Quantify Leadership Impact",
+                description: "Add specific metrics about team size and project outcomes when describing your leadership experience.",
+                category: "soft_skills",
+                priority: "high",
+                impact: "Strengthens leadership narrative by 20%"
+            },
+            {
+                title: "Emphasize Microservices Architecture",
+                description: "Mention any experience with microservices architecture, as this is highlighted in the job responsibilities.",
+                category: "technical_skills",
+                priority: "medium",
+                impact: "Aligns with modern architecture trends"
+            },
+            {
+                title: "Add DevOps Tools Experience",
+                description: "Expand on your CI/CD experience by mentioning specific DevOps tools and practices you've implemented.",
+                category: "technical_skills",
+                priority: "medium",
+                impact: "Demonstrates full-stack development capability"
+            }
+        ],
+
+        // Progress data for the results page
+        progressData: {
+            searchability: { score: 85, issues: 2, label: "2 issues to fix" },
+            hardSkills: { score: 92, issues: 1, label: "1 issue to fix" },
+            softSkills: { score: 88, issues: 2, label: "2 issues to fix" },
+            recruiterTips: { score: 78, issues: 3, label: "3 issues to fix" },
+            formatting: { score: 95, issues: 0, label: "All good!" }
+        }
+    };
+
+    localStorage.setItem('currentScanData', JSON.stringify(sampleScanData));
+    console.log('✅ Sample scan data stored with comprehensive analysis');
+    window.location.href = 'us10_results.html';
+}
+
+function upgradeToPro() {
+    console.log('💎 Upgrade to Pro clicked');
+    alert('Upgrade feature coming soon! You will be redirected to payment page.');
+}
+
+function contactSales() {
+    console.log('📞 Contact sales clicked');
+    alert('Please contact sales at sales@resumedoctor.ai for Enterprise pricing.');
 }
 
 function addEventListeners() {
@@ -86,14 +985,26 @@ function addEventListeners() {
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Remove active class from all items
-            navItems.forEach(nav => nav.classList.remove('active'));
-            
-            // Add active class to clicked item
-            this.classList.add('active');
-            
-            console.log('Navigation clicked:', this.textContent);
+
+            // Get the href attribute to determine navigation
+            const href = this.getAttribute('href');
+
+            // Handle navigation based on href
+            if (href) {
+                console.log('Navigation clicked:', this.textContent, 'href:', href);
+
+                // Navigate to the appropriate page
+                if (href.includes('scan_history')) {
+                    window.location.href = 'us10_scan_history.html';
+                } else if (href.includes('account')) {
+                    window.location.href = 'us10_account.html';
+                } else if (href.includes('dashboard')) {
+                    window.location.href = 'us10_dashboard.html';
+                } else {
+                    // For any other links, navigate directly
+                    window.location.href = href;
+                }
+            }
         });
     });
     
@@ -116,18 +1027,24 @@ function updateUserGreeting(userData) {
     // Update welcome title with user's first name
     const welcomeTitleElement = document.querySelector('.welcome-title');
     if (welcomeTitleElement && userData.first_name) {
-        welcomeTitleElement.textContent = `Welcome back, ${userData.first_name}`;
-        console.log(`✅ Updated welcome title to: Welcome back, ${userData.first_name}`);
+        welcomeTitleElement.textContent = `Welcome, ${userData.first_name}`;
+        console.log(`✅ Updated welcome title to: Welcome, ${userData.first_name}`);
     } else {
         console.log('❌ Could not update welcome title - element or first_name not found');
         console.log('Element found:', !!welcomeTitleElement);
         console.log('First name:', userData.first_name);
+        // Fallback to default name if no user data
+        if (welcomeTitleElement) {
+            welcomeTitleElement.textContent = 'Welcome, Sarah';
+        }
     }
 
     // Also update any user greeting elements if they exist
     const greetingElement = document.querySelector('.user-greeting');
     if (greetingElement && userData.first_name) {
         greetingElement.textContent = `Hi, ${userData.first_name}!`;
+    } else if (greetingElement) {
+        greetingElement.textContent = 'Hi, there!';
     }
 }
 
@@ -364,80 +1281,25 @@ function loadSavedResumes() {
     .then(response => response.json())
     .then(data => {
         const resumeSelectDiv = document.getElementById('resume-select');
-        if (data.success && data.resumes && data.resumes.length > 0) {
-            resumeSelectDiv.innerHTML = data.resumes.map(resume => `
-                <div class="saved-item" data-id="${resume.id}">
-                    <div class="saved-item-name">${resume.title || 'Untitled Resume'}</div>
-                    <div class="saved-item-date">Uploaded: ${new Date(resume.created_at).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-        } else {
-            resumeSelectDiv.innerHTML = '<div class="saved-placeholder">No saved resumes yet. Upload your first resume above!</div>';
+        if (resumeSelectDiv) {
+            if (data.success && data.resumes && data.resumes.length > 0) {
+                resumeSelectDiv.innerHTML = data.resumes.map(resume => `
+                    <div class="saved-item" data-id="${resume.id}">
+                        <div class="saved-item-name">${resume.title || 'Untitled Resume'}</div>
+                        <div class="saved-item-date">Uploaded: ${new Date(resume.created_at).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            } else {
+                resumeSelectDiv.innerHTML = '<div class="saved-placeholder">No saved resumes yet. Upload your first resume above!</div>';
+            }
         }
     })
     .catch(error => {
-        console.error('Error loading saved resumes:', error);
-        document.getElementById('resume-select').innerHTML = '<div class="saved-placeholder">Error loading resumes</div>';
-    });
-}
-
-function loadSavedJobDescriptions() {
-    const token = localStorage.getItem('dr_resume_token');
-
-    fetch(`${API_BASE_URL}/api/job_descriptions`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const jobSelectDiv = document.getElementById('job-select');
-        if (data.success && data.job_descriptions && data.job_descriptions.length > 0) {
-            jobSelectDiv.innerHTML = data.job_descriptions.map(job => `
-                <div class="saved-item" data-id="${job.id}">
-                    <div class="saved-item-name">${job.title || 'Untitled Job'}</div>
-                    <div class="saved-item-date">Created: ${new Date(job.created_at).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-        } else {
-            jobSelectDiv.innerHTML = '<div class="saved-placeholder">No saved job descriptions yet. Create your first job description above!</div>';
-        }
-    })
-    .catch(error => {
-        console.error('Error loading saved job descriptions:', error);
-        document.getElementById('job-select').innerHTML = '<div class="saved-placeholder">Error loading job descriptions</div>';
-    });
-}
-
-function loadSavedResumes() {
-    const token = localStorage.getItem('dr_resume_token');
-
-    fetch(`${API_BASE_URL}/api/resumes`, {
-        method: 'GET',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
+        console.error(' Error loading saved resumes:', error);
         const resumeSelectDiv = document.getElementById('resume-select');
-        if (data.success && data.resumes && data.resumes.length > 0) {
-            resumeSelectDiv.innerHTML = data.resumes.map(resume => `
-                <div class="saved-item" data-id="${resume.id}">
-                    <div class="saved-item-name">${resume.title || 'Untitled Resume'}</div>
-                    <div class="saved-item-date">Uploaded: ${new Date(resume.created_at).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-        } else {
-            resumeSelectDiv.innerHTML = '<div class="saved-placeholder">No saved resumes yet. Upload your first resume above!</div>';
+        if (resumeSelectDiv) {
+            resumeSelectDiv.innerHTML = '<div class="saved-placeholder">Error loading resumes</div>';
         }
-    })
-    .catch(error => {
-        console.error('Error loading saved resumes:', error);
-        document.getElementById('resume-select').innerHTML = '<div class="saved-placeholder">Error loading resumes</div>';
     });
 }
 
@@ -454,22 +1316,30 @@ function loadSavedJobDescriptions() {
     .then(response => response.json())
     .then(data => {
         const jobSelectDiv = document.getElementById('job-select');
-        if (data.success && data.job_descriptions && data.job_descriptions.length > 0) {
-            jobSelectDiv.innerHTML = data.job_descriptions.map(job => `
-                <div class="saved-item" data-id="${job.id}">
-                    <div class="saved-item-name">${job.title || 'Untitled Job'}</div>
-                    <div class="saved-item-date">Created: ${new Date(job.created_at).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-        } else {
-            jobSelectDiv.innerHTML = '<div class="saved-placeholder">No saved job descriptions yet. Create your first job description above!</div>';
+        if (jobSelectDiv) {
+            if (data.success && data.job_descriptions && data.job_descriptions.length > 0) {
+                jobSelectDiv.innerHTML = data.job_descriptions.map(job => `
+                    <div class="saved-item" data-id="${job.id}">
+                        <div class="saved-item-name">${job.title || 'Untitled Job'}</div>
+                        <div class="saved-item-date">Created: ${new Date(job.created_at).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            } else {
+                jobSelectDiv.innerHTML = '<div class="saved-placeholder">No saved job descriptions yet. Create your first job description above!</div>';
+            }
         }
     })
     .catch(error => {
-        console.error('Error loading saved job descriptions:', error);
-        document.getElementById('job-select').innerHTML = '<div class="saved-placeholder">Error loading job descriptions</div>';
+        console.error(' Error loading saved job descriptions:', error);
+        const jobSelectDiv = document.getElementById('job-select');
+        if (jobSelectDiv) {
+            jobSelectDiv.innerHTML = '<div class="saved-placeholder">Error loading job descriptions</div>';
+        }
     });
 }
+
+
+
 
 // Utility functions
 function showNotification(message, type = 'info') {
@@ -685,13 +1555,152 @@ function handleDrop(event) {
 
 function toggleSaveButton() {
     const textarea = document.querySelector('.job-textarea');
-    const saveBtn = document.querySelector('.save-btn');
-    
-    if (textarea.value.trim().length > 0) {
+    const saveBtn = document.getElementById('save-job-btn');
+
+    if (textarea && saveBtn) {
+        if (textarea.value.trim().length > 0) {
+            saveBtn.disabled = false;
+        } else {
+            saveBtn.disabled = true;
+        }
+    }
+}
+
+// Job Description Input Handling
+function handleJobDescriptionInput() {
+    const textarea = document.querySelector('.job-textarea');
+    const jobStatus = document.getElementById('job-status');
+    const wordCountElement = document.getElementById('job-word-count');
+    const saveBtn = document.getElementById('save-job-btn');
+
+    const text = textarea.value.trim();
+    const wordCount = text ? text.split(/\s+/).length : 0;
+
+    if (text) {
+        jobStatus.style.display = 'flex';
+        wordCountElement.textContent = `${wordCount} words`;
         saveBtn.disabled = false;
     } else {
+        jobStatus.style.display = 'none';
         saveBtn.disabled = true;
     }
+}
+
+// Job File Upload Functions
+function triggerJobFileUpload() {
+    document.getElementById('job-file-input').click();
+}
+
+function handleJobFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        processJobFile(file);
+    }
+}
+
+function handleJobDragOver(event) {
+    event.preventDefault();
+    const uploadArea = document.getElementById('job-upload-area');
+    uploadArea.classList.add('drag-over');
+}
+
+function handleJobDragLeave(event) {
+    event.preventDefault();
+    const uploadArea = document.getElementById('job-upload-area');
+    uploadArea.classList.remove('drag-over');
+}
+
+function handleJobFileDrop(event) {
+    event.preventDefault();
+    const uploadArea = document.getElementById('job-upload-area');
+    uploadArea.classList.remove('drag-over');
+
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        processJobFile(files[0]);
+    }
+}
+
+function processJobFile(file) {
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword',
+                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                         'text/plain'];
+
+    if (!allowedTypes.includes(file.type)) {
+        showNotification('Please upload a PDF, DOC, DOCX, or TXT file', 'error');
+        return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        showNotification('File size must be less than 5MB', 'error');
+        return;
+    }
+
+    // Show file in upload area
+    const uploadContent = document.getElementById('job-upload-content');
+    const fileDisplay = document.getElementById('job-file-display');
+    const fileName = document.getElementById('job-file-name');
+
+    uploadContent.style.display = 'none';
+    fileDisplay.style.display = 'flex';
+    fileName.textContent = file.name;
+
+    // Extract text from file
+    extractTextFromJobFile(file);
+}
+
+function extractTextFromJobFile(file) {
+    const reader = new FileReader();
+
+    if (file.type === 'text/plain') {
+        reader.onload = function(e) {
+            const text = e.target.result;
+            document.querySelector('.job-textarea').value = text;
+            handleJobDescriptionInput();
+            showNotification('Job description loaded from file', 'success');
+        };
+        reader.readAsText(file);
+    } else {
+        // For PDF/DOC files, we'll need to send to backend for processing
+        const formData = new FormData();
+        formData.append('job_file', file);
+
+        const token = localStorage.getItem('dr_resume_token');
+
+        fetch(`${API_BASE_URL}/api/extract_job_text`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector('.job-textarea').value = data.extracted_text;
+                handleJobDescriptionInput();
+                showNotification('Job description extracted from file', 'success');
+            } else {
+                showNotification('Failed to extract text from file', 'error');
+                resetJobUploadArea();
+            }
+        })
+        .catch(error => {
+            console.error('Error extracting job text:', error);
+            showNotification('Error processing file', 'error');
+            resetJobUploadArea();
+        });
+    }
+}
+
+function resetJobUploadArea() {
+    const uploadContent = document.getElementById('job-upload-content');
+    const fileDisplay = document.getElementById('job-file-display');
+
+    uploadContent.style.display = 'flex';
+    fileDisplay.style.display = 'none';
 }
 
 function saveJobDescription() {
@@ -1313,6 +2322,149 @@ window.DashboardApp = {
     hideMatchingScore
 };
 
+// Real-time LLM Analysis
+function performRealtimeAnalysis() {
+    const resumeText = getCurrentResumeText();
+    const jobDescriptionText = document.querySelector('.job-textarea').value.trim();
+
+    if (!resumeText || !jobDescriptionText) {
+        showNotification('Please upload a resume and enter a job description', 'warning');
+        return;
+    }
+
+    const token = localStorage.getItem('dr_resume_token');
+
+    showNotification('Performing real-time analysis...', 'info');
+
+    fetch(`${API_BASE_URL}/api/analyze_realtime`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            resume_text: resumeText,
+            job_description_text: jobDescriptionText
+        })
+    })
+    .then(response => {
+        if (response.status === 401) {
+            clearTokens();
+            window.location.href = 'us10_login.html';
+            return;
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            displayRealtimeAnalysis(data.analysis);
+            showNotification('Real-time analysis completed!', 'success');
+
+            // Update scan status if provided
+            if (data.scan_status) {
+                displayScanStatus(data.scan_status);
+            }
+        } else {
+            if (data.message && data.message.includes('No free scans remaining')) {
+                showNotification('No free scans remaining! Upgrade to premium for unlimited scans.', 'error');
+                if (data.scan_status) {
+                    displayScanStatus(data.scan_status);
+                }
+            } else {
+                showNotification(data.message || 'Analysis failed', 'error');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Real-time analysis error:', error);
+        showNotification('Error performing analysis', 'error');
+    });
+}
+
+function displayRealtimeAnalysis(analysis) {
+    // Update the results display with real-time analysis
+    const resultsContainer = document.getElementById('results-container');
+    if (!resultsContainer) return;
+
+    const analysisHTML = `
+        <div class="realtime-analysis">
+            <div class="analysis-header">
+                <h3>Real-Time Analysis Results</h3>
+                <span class="timestamp">${new Date(analysis.timestamp).toLocaleString()}</span>
+            </div>
+
+            <div class="score-overview">
+                <div class="overall-score">
+                    <span class="score-value">${analysis.overall_match_score}%</span>
+                    <span class="score-label">Overall Match</span>
+                </div>
+
+                <div class="category-scores">
+                    <div class="score-item">
+                        <span class="score">${analysis.category_scores.technical_skills}%</span>
+                        <span class="label">Technical Skills</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score">${analysis.category_scores.soft_skills}%</span>
+                        <span class="label">Soft Skills</span>
+                    </div>
+                    <div class="score-item">
+                        <span class="score">${analysis.category_scores.ats_compatibility}%</span>
+                        <span class="label">ATS Compatible</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detailed-analysis">
+                <div class="matched-skills">
+                    <h4>✅ Matched Skills (${analysis.detailed_analysis.matched_skills.length})</h4>
+                    <div class="skills-list">
+                        ${analysis.detailed_analysis.matched_skills.map(skill =>
+                            `<span class="skill-tag matched">${skill.skill}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+
+                <div class="missing-skills">
+                    <h4>❌ Missing Skills (${analysis.detailed_analysis.missing_skills.length})</h4>
+                    <div class="skills-list">
+                        ${analysis.detailed_analysis.missing_skills.map(skill =>
+                            `<span class="skill-tag missing">${skill.skill}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendations">
+                <h4>💡 AI Recommendations</h4>
+                <div class="recommendations-list">
+                    ${analysis.recommendations.map(rec => `
+                        <div class="recommendation-item ${rec.priority}">
+                            <div class="rec-title">${rec.title}</div>
+                            <div class="rec-description">${rec.description}</div>
+                            <div class="rec-action">${rec.action}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    resultsContainer.innerHTML = analysisHTML;
+    resultsContainer.style.display = 'block';
+}
+
+function getCurrentResumeText() {
+    // Get the current resume text from the textarea
+    const resumeTextarea = document.getElementById('resume-text');
+    if (resumeTextarea && resumeTextarea.value.trim()) {
+        return resumeTextarea.value.trim();
+    }
+
+    // Fallback to localStorage if textarea is empty
+    return localStorage.getItem('current_resume_text') || '';
+}
+
 // Make functions globally accessible
 window.handleLogout = handleLogout;
 window.switchTab = switchTab;
@@ -1326,3 +2478,94 @@ window.generateBasicSuggestions = generateBasicSuggestions;
 window.generatePremiumSuggestions = generatePremiumSuggestions;
 window.showBasicSuggestions = showBasicSuggestions;
 window.showPremiumSuggestions = showPremiumSuggestions;
+window.handleJobDescriptionInput = handleJobDescriptionInput;
+window.triggerJobFileUpload = triggerJobFileUpload;
+window.handleJobFileSelect = handleJobFileSelect;
+window.handleJobDragOver = handleJobDragOver;
+window.handleJobDragLeave = handleJobDragLeave;
+window.handleJobFileDrop = handleJobFileDrop;
+window.performRealtimeAnalysis = performRealtimeAnalysis;
+window.showSavedResumes = showSavedResumes;
+window.closeSavedResumesModal = closeSavedResumesModal;
+window.selectResume = selectResume;
+
+// Scan Status Functions
+async function loadScanStatus() {
+    try {
+        const token = localStorage.getItem('dr_resume_token');
+        const response = await fetch(`${API_BASE_URL}/api/scan_status`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                displayScanStatus(result.scan_status);
+            }
+        }
+    } catch (error) {
+        console.error('Error loading scan status:', error);
+    }
+}
+
+// Display scan status in the UI
+function displayScanStatus(scanStatus) {
+    console.log('📊 Displaying scan status:', scanStatus);
+
+    // Update the scan count in the scan controls section
+    const scanCountElement = document.getElementById('scan-count');
+    if (scanCountElement) {
+        scanCountElement.textContent = scanStatus.free_scans_remaining;
+        console.log('✅ Updated scan count to:', scanStatus.free_scans_remaining);
+    }
+
+    // Update the available scans text and styling
+    const availableScansElement = document.querySelector('.available-scans');
+    if (availableScansElement) {
+        if (scanStatus.is_premium) {
+            availableScansElement.innerHTML = 'Available scans: <span id="scan-count">Unlimited</span> (Premium)';
+            availableScansElement.style.color = '#10b981'; // Green for premium
+        } else {
+            availableScansElement.innerHTML = `Available scans: <span id="scan-count">${scanStatus.free_scans_remaining}</span>`;
+
+            // Add warning styling if low on scans
+            if (scanStatus.free_scans_remaining <= 1) {
+                availableScansElement.style.color = '#ef4444'; // Red for low scans
+                availableScansElement.style.fontWeight = 'bold';
+            } else if (scanStatus.free_scans_remaining <= 2) {
+                availableScansElement.style.color = '#f59e0b'; // Orange for warning
+            } else {
+                availableScansElement.style.color = '#6b7280'; // Default gray
+                availableScansElement.style.fontWeight = 'normal';
+            }
+        }
+    }
+
+    // Show upgrade button more prominently if no scans left
+    const upgradeBtn = document.querySelector('.upgrade-btn');
+    if (upgradeBtn) {
+        if (scanStatus.free_scans_remaining === 0 && !scanStatus.is_premium) {
+            upgradeBtn.style.backgroundColor = '#ef4444';
+            upgradeBtn.style.color = 'white';
+            upgradeBtn.style.animation = 'pulse 2s infinite';
+            upgradeBtn.textContent = 'Upgrade Now!';
+        } else if (scanStatus.free_scans_remaining <= 2 && !scanStatus.is_premium) {
+            upgradeBtn.style.backgroundColor = '#f59e0b';
+            upgradeBtn.style.color = 'white';
+            upgradeBtn.textContent = 'Upgrade';
+        } else if (scanStatus.is_premium) {
+            upgradeBtn.style.display = 'none'; // Hide upgrade button for premium users
+        }
+    }
+
+    // Show notification and upgrade prompt if scans are low
+    if (scanStatus.free_scans_remaining === 0 && !scanStatus.is_premium) {
+        showNotification('No free scans remaining! Upgrade to premium for unlimited scans.', 'warning');
+    } else if (scanStatus.free_scans_remaining <= 1 && !scanStatus.is_premium) {
+        showUpgradePrompt();
+    }
+}

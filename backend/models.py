@@ -32,6 +32,11 @@ class User(db.Model):
     is_email_verified = db.Column(db.Boolean, default=False)
     email_verification_token = db.Column(db.String(255), nullable=True)
     email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+
+    # Free scan tracking
+    free_scans_remaining = db.Column(db.Integer, default=5, nullable=False)
+    total_scans_used = db.Column(db.Integer, default=0, nullable=False)
+
     last_login = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -93,9 +98,22 @@ class User(db.Model):
     
     @staticmethod
     def validate_password(password):
-        """Validate password strength"""
+        """Validate password strength - requires uppercase, lowercase, and special character"""
         if len(password) < 8:
             return False, "Password must be at least 8 characters long"
+
+        # Check for uppercase letter
+        if not re.search(r'[A-Z]', password):
+            return False, "Password must contain at least one uppercase letter"
+
+        # Check for lowercase letter
+        if not re.search(r'[a-z]', password):
+            return False, "Password must contain at least one lowercase letter"
+
+        # Check for special character
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            return False, "Password must contain at least one special character (!@#$%^&*(),.?\":{}|<>)"
+
         return True, "Password is valid"
 
     def has_role(self, role):
@@ -170,6 +188,28 @@ class User(db.Model):
             'job_description_count': len(self.job_descriptions)
         }
     
+    def use_free_scan(self):
+        """Use one free scan and update counters"""
+        if self.free_scans_remaining > 0:
+            self.free_scans_remaining -= 1
+            self.total_scans_used += 1
+            db.session.commit()
+            return True
+        return False
+
+    def can_perform_scan(self):
+        """Check if user can perform a scan"""
+        return self.free_scans_remaining > 0 or self.role in ['premium', 'admin']
+
+    def get_scan_status(self):
+        """Get current scan status for user"""
+        return {
+            'free_scans_remaining': self.free_scans_remaining,
+            'total_scans_used': self.total_scans_used,
+            'can_scan': self.can_perform_scan(),
+            'is_premium': self.role in ['premium', 'admin']
+        }
+
     def __repr__(self):
         return f'<User {self.email}>'
 
@@ -493,6 +533,91 @@ class MatchScore(db.Model):
 
     def __repr__(self):
         return f'<MatchScore {self.overall_score}% for Resume {self.resume_id} vs JD {self.job_description_id}>'
+
+
+class ScanHistory(db.Model):
+    """
+    Scan History Model - Stores detailed scan results and analysis
+    This replaces the need to use MatchScore for history tracking
+    """
+    __tablename__ = 'scan_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Resume and Job Description info (can be null for real-time scans)
+    resume_id = db.Column(db.Integer, db.ForeignKey('resumes.id'), nullable=True)
+    job_description_id = db.Column(db.Integer, db.ForeignKey('job_descriptions.id'), nullable=True)
+
+    # Raw text content (for real-time scans)
+    resume_text = db.Column(db.Text, nullable=True)
+    job_description_text = db.Column(db.Text, nullable=True)
+
+    # Scan results - stored as JSON
+    overall_match_score = db.Column(db.Float, nullable=False)
+    category_scores = db.Column(db.JSON, nullable=True)  # technical, soft_skills, experience, etc.
+    detailed_analysis = db.Column(db.JSON, nullable=True)  # matched_skills, missing_skills, etc.
+    recommendations = db.Column(db.JSON, nullable=True)  # AI recommendations
+    keyword_analysis = db.Column(db.JSON, nullable=True)  # keyword density, etc.
+    ats_compatibility = db.Column(db.Float, default=0.0)
+
+    # Metadata
+    scan_type = db.Column(db.String(20), default='realtime')  # 'realtime' or 'stored'
+    algorithm_used = db.Column(db.String(50), default='llm_enhanced')
+    scan_duration = db.Column(db.Float, nullable=True)  # in seconds
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('scan_history', lazy=True))
+    resume = db.relationship('Resume', backref=db.backref('scan_history', lazy=True))
+    job_description = db.relationship('JobDescription', backref=db.backref('scan_history', lazy=True))
+
+    def get_score_category(self):
+        """Get score category for color coding"""
+        if self.overall_match_score >= 80:
+            return 'excellent'
+        elif self.overall_match_score >= 60:
+            return 'good'
+        elif self.overall_match_score >= 40:
+            return 'fair'
+        else:
+            return 'poor'
+
+    def to_dict(self, include_details=False):
+        """Convert scan history object to dictionary"""
+        data = {
+            'id': self.id,
+            'user_id': self.user_id,
+            'resume_id': self.resume_id,
+            'job_description_id': self.job_description_id,
+            'overall_match_score': round(self.overall_match_score, 2),
+            'score_category': self.get_score_category(),
+            'ats_compatibility': round(self.ats_compatibility, 2),
+            'scan_type': self.scan_type,
+            'algorithm_used': self.algorithm_used,
+            'scan_duration': self.scan_duration,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+        if include_details:
+            data.update({
+                'category_scores': self.category_scores or {},
+                'detailed_analysis': self.detailed_analysis or {},
+                'recommendations': self.recommendations or [],
+                'keyword_analysis': self.keyword_analysis or {},
+                'resume_title': self.resume.title if self.resume else 'Real-time Scan',
+                'job_title': self.job_description.title if self.job_description else 'Real-time Scan',
+                'company_name': self.job_description.company_name if self.job_description else None
+            })
+
+        return data
+
+    def __repr__(self):
+        return f'<ScanHistory {self.overall_match_score}% for User {self.user_id}>'
 
 
 class Suggestion(db.Model):

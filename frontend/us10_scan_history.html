@@ -10,10 +10,10 @@
 <body>
     <!-- Header Navigation -->
     <header class="dashboard-header">
-        <div class="nav-brand">
+        <a href="/" class="nav-brand" onclick="handleBrandClick(event)">
             <div class="logo-dot"></div>
             <span class="brand-text">ResumeDoctor AI</span>
-        </div>
+        </a>
         <nav class="nav-menu">
             <a href="us10_dashboard.html" class="nav-item">
                 <span class="nav-icon">🏠</span>
@@ -147,5 +147,14 @@
 
     <script src="static/js/config.js"></script>
     <script src="static/js/us10_scan_history.js"></script>
+    <script>
+        function handleBrandClick(event) {
+            // For logged-in users, show a confirmation before leaving dashboard
+            const confirmed = confirm('Are you sure you want to go to the landing page? You will need to log in again to access your dashboard.');
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        }
+    </script>
 </body>
 </html>

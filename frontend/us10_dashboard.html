@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - ResumeDoctor AI</title>
-    <link rel="stylesheet" href="static/css/us10_styles.css">
+    <link rel="stylesheet" href="static/css/us10_styles.css?v=1.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Header Navigation -->
     <header class="dashboard-header">
-        <div class="nav-brand">
+        <a href="/" class="nav-brand" onclick="handleBrandClick(event)">
             <div class="logo-dot"></div>
             <span class="brand-text">ResumeDoctor AI</span>
-        </div>
+        </a>
         
         <nav class="dashboard-nav">
             <a href="us10_dashboard.html" class="nav-item active">Dashboard</a>
@@ -34,26 +34,11 @@
         <div class="container">
             <!-- Welcome Banner -->
             <section class="welcome-banner">
-                <h1 class="welcome-title">Welcome back, there</h1>
-                <p class="welcome-subtitle">Ready to optimize your job search, Let's start</p>
-            </section>
-
-            <!-- Statistics Cards -->
-            <section class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">3</div>
-                        <div class="stat-label">Resumes</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">2</div>
-                        <div class="stat-label">Job Descriptions</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">1</div>
-                        <div class="stat-label">Scans</div>
-                    </div>
+                <div class="welcome-content">
+                    <h1 class="welcome-title">Welcome, Sarah</h1>
+                    <p class="welcome-subtitle">You have 3 new job matches today</p>
                 </div>
+                <button class="new-resume-btn">New Resume</button>
             </section>
 
             <!-- Recent Scan History -->
@@ -96,222 +81,192 @@
                 </div>
             </section>
 
-            <!-- Resume Analysis Section -->
-            <section class="resume-analysis-section">
-                <div class="analysis-header">
-                    <h2 class="analysis-title">AI-Powered Resume Analysis & Job Matching Platform</h2>
+            <!-- Resume & Job Matching Platform Section -->
+            <section class="resume-matching-section">
+                <div class="section-header">
+                    <h2 class="section-title">Resume & Job Matching Platform</h2>
+                    <button class="sample-scan-btn" onclick="viewSampleScan()">View a Sample Scan</button>
                 </div>
-                
-                <div class="analysis-grid">
-                    <!-- Resume Upload Section -->
-                    <div class="resume-section">
-                        <div class="section-header">
-                            <div class="section-icon">📄</div>
-                            <h3 class="section-title">Resume</h3>
-                            <button class="select-saved-btn">Select Saved</button>
-                        </div>
-                        
-                        <div class="tab-container">
-                            <button class="tab-btn active" onclick="switchTab('resume', 'upload')">
-                                <span class="tab-icon">📤</span>
-                                Upload New
-                            </button>
-                            <button class="tab-btn" onclick="switchTab('resume', 'select')">
-                                <span class="tab-icon">📁</span>
-                                Select Saved
-                            </button>
-                        </div>
-                        
-                        <div class="tab-content">
-                            <div id="resume-upload" class="tab-pane active">
-                                <div class="upload-area" onclick="triggerFileUpload()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
-                                    <div class="upload-icon">📁</div>
-                                    <div class="upload-text">Drag & Drop or Upload</div>
-                                    <div class="upload-subtext">Supports PDF, DOC, DOCX files</div>
-                                    <input type="file" id="resume-file" accept=".pdf,.doc,.docx" style="display: none;" onchange="handleFileSelect(event)">
-                                </div>
-                            </div>
-                            <div id="resume-select" class="tab-pane">
-                                <div class="saved-placeholder">
-                                    Select from your saved resumes...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Job Description Section -->
-                    <div class="job-section">
-                        <div class="section-header">
-                            <div class="section-icon">💼</div>
-                            <h3 class="section-title">Job Description</h3>
-                            <button class="select-saved-btn">Select Saved</button>
-                        </div>
-                        
-                        <div class="tab-container">
-                            <button class="tab-btn active" onclick="switchTab('job', 'enter')">
-                                <span class="tab-icon">✏️</span>
-                                Enter New
-                            </button>
-                            <button class="tab-btn" onclick="switchTab('job', 'select')">
-                                <span class="tab-icon">📁</span>
-                                Select Saved
-                            </button>
-                        </div>
-                        
-                        <div class="tab-content">
-                            <div id="job-enter" class="tab-pane active">
-                                <div class="example-section">
-                                    <h4 class="example-title">Example:</h4>
-                                    <div class="example-box">
-                                        We are seeking a talented Software Engineer to join our dynamic team. The ideal candidate will have experience in:<br><br>
-                                        • Python, JavaScript, and modern web frameworks<br>
-                                        • Database design and optimization<br>
-                                        • Agile development methodologies
-                                    </div>
-                                </div>
-                                
-                                <textarea 
-                                    class="job-textarea" 
-                                    placeholder="Paste your job description here..."
-                                    rows="4"
-                                    oninput="toggleSaveButton()"
-                                ></textarea>
-                                
-                                <button class="save-btn" disabled onclick="saveJobDescription()">
-                                    <span class="btn-icon">💾</span>
-                                    Save & Extract Keywords
+
+                <div class="new-scan-container">
+                    <h3 class="scan-title">New scan</h3>
+
+                    <div class="scan-grid">
+                        <!-- Resume Section -->
+                        <div class="resume-section">
+                            <div class="section-header">
+                                <h4 class="section-title">Resume</h4>
+                                <button class="saved-resumes-btn" onclick="showSavedResumes()">
+                                    <span class="star-icon">⭐</span>
+                                    Saved Resumes
                                 </button>
                             </div>
-                            <div id="job-select" class="tab-pane">
-                                <div class="saved-placeholder">
-                                    Select from your saved job descriptions...
+
+                            <div class="input-area">
+                                <textarea
+                                    class="resume-textarea"
+                                    placeholder="Paste resume text..."
+                                    rows="8"
+                                    id="resume-text"
+                                ></textarea>
+
+                                <div class="upload-section">
+                                    <div class="upload-area" id="upload-area" onclick="triggerFileUpload()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                                        <div class="upload-content" id="upload-content">
+                                            <div class="upload-icon">📁</div>
+                                            <div class="upload-text">Drag & Drop or Upload</div>
+                                        </div>
+                                        <div class="uploaded-file-display" id="uploaded-file-display" style="display: none;">
+                                            <div class="file-icon">📄</div>
+                                            <div class="file-name-center" id="uploaded-file-name-center"></div>
+                                            <div class="upload-status-center">✅ Uploaded Successfully</div>
+                                            <button class="change-file-btn" onclick="triggerFileUpload()">Change File</button>
+                                        </div>
+                                        <input type="file" id="resume-file" accept=".pdf,.doc,.docx" style="display: none;" onchange="handleFileSelect(event)">
+                                    </div>
+
+                                    <div id="uploaded-resume" class="uploaded-file" style="display: none;">
+                                        <div class="file-info">
+                                            <span class="file-name" id="uploaded-file-name"></span>
+                                            <span class="upload-status">uploaded</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Job Description Section -->
+                        <div class="job-section">
+                            <div class="section-header">
+                                <h4 class="section-title">Job Description</h4>
+                                <button class="select-saved-btn" onclick="showSavedJobDescriptions()">
+                                    <span class="star-icon">⭐</span>
+                                    Saved Jobs
+                                </button>
+                            </div>
+
+                            <div class="job-input-container">
+                                <!-- Left side: Text input -->
+                                <div class="job-text-area">
+                                    <textarea
+                                        class="job-textarea"
+                                        placeholder="Copy and paste job description here or drag & drop a file"
+                                        rows="15"
+                                        id="job-description"
+                                        oninput="handleJobDescriptionInput()"
+                                    ></textarea>
+                                </div>
+
+                                <!-- Right side: Drag & Drop area -->
+                                <div class="job-upload-area"
+                                     id="job-upload-area"
+                                     ondrop="handleJobFileDrop(event)"
+                                     ondragover="handleJobDragOver(event)"
+                                     ondragleave="handleJobDragLeave(event)"
+                                     onclick="triggerJobFileUpload()">
+                                    <div class="job-upload-content" id="job-upload-content">
+                                        <div class="upload-icon">📄</div>
+                                        <div class="upload-text">Drag & Drop Job Description</div>
+                                        <div class="upload-subtext">PDF, DOCX, TXT files</div>
+                                        <button class="browse-btn">Browse Files</button>
+                                    </div>
+                                    <div class="job-file-display" id="job-file-display" style="display: none;">
+                                        <div class="file-icon">📄</div>
+                                        <div class="file-name" id="job-file-name"></div>
+                                        <div class="upload-status">✅ File Loaded</div>
+                                        <button class="change-file-btn" onclick="triggerJobFileUpload()">Change File</button>
+                                    </div>
+                                    <input type="file" id="job-file-input" accept=".pdf,.doc,.docx,.txt" style="display: none;" onchange="handleJobFileSelect(event)">
+                                </div>
+                            </div>
+
+                            <!-- Job Description Status -->
+                            <div class="job-status" id="job-status" style="display: none;">
+                                <div class="status-info">
+                                    <span class="status-text" id="job-status-text">Job description ready</span>
+                                    <span class="word-count" id="job-word-count">0 words</span>
+                                </div>
+                                <button class="save-job-btn" id="save-job-btn" onclick="saveJobDescription()">Save Job Description</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan Controls -->
+                    <div class="scan-controls">
+                        <div class="scan-info">
+                            <span class="available-scans">Available scans: <span id="scan-count">5</span></span>
+                            <button class="upgrade-btn" onclick="showUpgradeModal()">Upgrade</button>
+                            <button class="power-edit-btn" onclick="togglePowerEdit()">
+                                <span class="power-icon">⚡</span>
+                                Power Edit
+                            </button>
+                            <button class="scan-btn" onclick="performScan()">Scan</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Matching Score Section -->
-                <div class="matching-score-section" id="matching-score-section" style="display: none;">
-                    <div class="section-header">
-                        <div class="section-icon">🎯</div>
-                        <h3 class="section-title">Matching Score Analysis</h3>
-                    </div>
+            </section>
 
-                    <div class="matching-score-content">
-                        <div class="overall-score-container">
-                            <div class="circular-progress" id="overall-progress">
-                                <div class="progress-text">
-                                    <span class="score-value" id="overall-score-value">0%</span>
-                                    <span class="score-label">Overall Match</span>
-                                </div>
-                            </div>
-                            <div class="score-category" id="score-category">
-                                Getting Started
-                            </div>
-                        </div>
-
-                        <div class="detailed-scores">
-                            <div class="score-breakdown">
-                                <div class="score-item">
-                                    <div class="score-item-header">
-                                        <span class="score-item-label">Technical Skills</span>
-                                        <span class="score-item-value" id="technical-score">0%</span>
-                                    </div>
-                                    <div class="score-bar">
-                                        <div class="score-fill" id="technical-fill" style="width: 0%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="score-item">
-                                    <div class="score-item-header">
-                                        <span class="score-item-label">Soft Skills</span>
-                                        <span class="score-item-value" id="soft-skills-score">0%</span>
-                                    </div>
-                                    <div class="score-bar">
-                                        <div class="score-fill" id="soft-skills-fill" style="width: 0%"></div>
-                                    </div>
-                                </div>
-
-                                <div class="score-item">
-                                    <div class="score-item-header">
-                                        <span class="score-item-label">Other Keywords</span>
-                                        <span class="score-item-value" id="other-keywords-score">0%</span>
-                                    </div>
-                                    <div class="score-bar">
-                                        <div class="score-fill" id="other-keywords-fill" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="keyword-analysis">
-                                <h4>Keyword Analysis</h4>
-                                <div class="keyword-stats">
-                                    <div class="keyword-stat">
-                                        <span class="stat-label">Total Keywords Matched</span>
-                                        <span class="stat-value" id="matched-keywords">0</span>
-                                    </div>
-                                    <div class="keyword-stat">
-                                        <span class="stat-label">Resume Keywords</span>
-                                        <span class="stat-value" id="resume-keywords">0</span>
-                                    </div>
-                                    <div class="keyword-stat">
-                                        <span class="stat-label">Job Description Keywords</span>
-                                        <span class="stat-value" id="jd-keywords">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Matching Score Action Button -->
-                    <div class="matching-score-actions">
-                        <button class="action-btn matching" onclick="generateMatchingScore()">
-                            <span class="btn-icon">🎯</span>
-                            Calculate Matching Score
-                        </button>
-                    </div>
+            <!-- Pro Plans Section -->
+            <section class="pro-plans-section" id="pro-plans-section" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">Upgrade to Pro</h2>
+                    <p class="section-description">Unlock unlimited scans and advanced AI features</p>
                 </div>
 
-                <!-- Suggestions Section -->
-                <div class="suggestions-section" id="suggestions-section" style="display: none;">
-                    <div class="section-header">
-                        <div class="section-icon">💡</div>
-                        <h3 class="section-title">AI Suggestions</h3>
-                        <div class="suggestion-type-toggle">
-                            <button class="toggle-btn active" id="basic-toggle" onclick="showBasicSuggestions()">Basic</button>
-                            <button class="toggle-btn" id="premium-toggle" onclick="showPremiumSuggestions()">Premium</button>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <div class="plan-header">
+                            <h3>Free</h3>
+                            <div class="plan-price">
+                                <span class="price">$0</span>
+                                <span class="period">Forever</span>
+                            </div>
                         </div>
+                        <ul class="plan-features">
+                            <li>5 resume scans per month</li>
+                            <li>Basic ATS compatibility check</li>
+                            <li>1 resume template</li>
+                            <li>Basic keyword suggestions</li>
+                        </ul>
+                        <button class="btn btn-outline btn-full" disabled>Current Plan</button>
                     </div>
-
-                    <div class="suggestions-content">
-                        <div id="suggestions-loading" class="loading-state" style="display: none;">
-                            <div class="loading-spinner"></div>
-                            <p>Generating suggestions...</p>
+                    <div class="pricing-card featured">
+                        <div class="plan-badge">Most Popular</div>
+                        <div class="plan-header">
+                            <h3>Pro</h3>
+                            <div class="plan-price">
+                                <span class="price">$29</span>
+                                <span class="period">per month</span>
+                            </div>
                         </div>
-
-                        <div id="suggestions-list" class="suggestions-list">
-                            <!-- Suggestions will be populated here -->
-                        </div>
-
-                        <div id="suggestions-empty" class="empty-state">
-                            <div class="empty-icon">📝</div>
-                            <h4>No Suggestions Yet</h4>
-                            <p>Upload a resume and job description to get personalized suggestions</p>
-                        </div>
+                        <ul class="plan-features">
+                            <li>Unlimited resume scans</li>
+                            <li>Advanced AI optimization</li>
+                            <li>50+ premium templates</li>
+                            <li>Cover letter optimization</li>
+                            <li>LinkedIn profile optimization</li>
+                            <li>Job tracking dashboard</li>
+                        </ul>
+                        <button class="btn btn-primary btn-full" onclick="upgradeToPro()">Start Pro Trial</button>
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="action-buttons">
-                    <button class="action-btn basic" onclick="generateBasicSuggestions()">
-                        <span class="btn-icon">⭐</span>
-                        Generate Basic Suggestions
-                    </button>
-                    <button class="action-btn premium" onclick="generatePremiumSuggestions()">
-                        <span class="btn-icon">💎</span>
-                        Generate Premium Suggestions
-                    </button>
+                    <div class="pricing-card">
+                        <div class="plan-header">
+                            <h3>Enterprise</h3>
+                            <div class="plan-price">
+                                <span class="price">$99</span>
+                                <span class="period">per month</span>
+                            </div>
+                        </div>
+                        <ul class="plan-features">
+                            <li>Everything in Pro</li>
+                            <li>Team management</li>
+                            <li>Priority support</li>
+                            <li>Custom integrations</li>
+                            <li>Advanced analytics</li>
+                        </ul>
+                        <button class="btn btn-outline btn-full" onclick="contactSales()">Contact Sales</button>
+                    </div>
                 </div>
             </section>
         </div>
@@ -351,7 +306,16 @@
         </div>
     </footer>
 
-    <script src="static/js/config.js"></script>
-    <script src="static/js/us10_dashboard.js"></script>
+    <script src="static/js/config.js?v=1.1"></script>
+    <script src="static/js/us10_dashboard.js?v=1.1"></script>
+    <script>
+        function handleBrandClick(event) {
+            // For logged-in users, show a confirmation before leaving dashboard
+            const confirmed = confirm('Are you sure you want to go to the landing page? You will need to log in again to access your dashboard.');
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        }
+    </script>
 </body>
 </html>

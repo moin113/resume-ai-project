@@ -2,13 +2,15 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from backend.models import db, User, JobDescription
 from backend.services.keyword_parser import KeywordParser
+from backend.services.file_parser import FileParser
 from datetime import datetime
 
 # Create blueprint for job description routes
 jd_bp = Blueprint('job_descriptions', __name__, url_prefix='/api')
 
-# Initialize keyword parser
+# Initialize services
 keyword_parser = KeywordParser()
+file_parser = FileParser()
 
 @jd_bp.route('/upload_jd', methods=['POST'])
 @jwt_required()
@@ -380,4 +382,80 @@ def duplicate_job_description(jd_id):
             'success': False,
             'message': 'Error duplicating job description',
             'error': str(e)
+        }), 500
+
+
+@jd_bp.route('/extract_job_text', methods=['POST'])
+@jwt_required()
+def extract_job_text():
+    """
+    Extract text from uploaded job description file (PDF, DOC, DOCX)
+    """
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+
+        if not user:
+            return jsonify({
+                'success': False,
+                'message': 'User not found'
+            }), 404
+
+        # Check if file is provided
+        if 'job_file' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'No file provided'
+            }), 400
+
+        file = request.files['job_file']
+
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message': 'No file selected'
+            }), 400
+
+        # Validate file type
+        allowed_extensions = {'.pdf', '.doc', '.docx', '.txt'}
+        file_extension = '.' + file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+
+        if file_extension not in allowed_extensions:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid file type. Please upload PDF, DOC, DOCX, or TXT files only.'
+            }), 400
+
+        # Extract text from file
+        try:
+            extracted_text = file_parser.extract_text_from_file(file)
+
+            if not extracted_text or len(extracted_text.strip()) < 50:
+                return jsonify({
+                    'success': False,
+                    'message': 'Could not extract meaningful text from file'
+                }), 400
+
+            current_app.logger.info(f"Successfully extracted {len(extracted_text)} characters from job file")
+
+            return jsonify({
+                'success': True,
+                'extracted_text': extracted_text,
+                'file_name': file.filename,
+                'text_length': len(extracted_text),
+                'word_count': len(extracted_text.split())
+            }), 200
+
+        except Exception as parse_error:
+            current_app.logger.error(f"Error parsing job file: {parse_error}")
+            return jsonify({
+                'success': False,
+                'message': 'Failed to extract text from file. Please check file format.'
+            }), 400
+
+    except Exception as e:
+        current_app.logger.error(f"Error in extract_job_text: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Internal server error'
         }), 500

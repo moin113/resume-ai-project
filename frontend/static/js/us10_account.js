@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up form handlers
     setupFormHandlers();
+
+    // Add navigation event listeners
+    addNavigationListeners();
 });
 
 async function checkAuthentication() {
@@ -131,31 +134,148 @@ function populateAccountForm(user) {
 function setupFormHandlers() {
     // Personal info form
     document.getElementById('personalInfoForm').addEventListener('submit', handlePersonalInfoUpdate);
-    
+
     // Password form
     document.getElementById('passwordForm').addEventListener('submit', handlePasswordChange);
-    
+
     // Delete form
     document.getElementById('deleteForm').addEventListener('submit', function(e) {
         e.preventDefault();
         deleteAccount();
     });
+
+    // Add input validation
+    addInputValidation();
+}
+
+function addInputValidation() {
+    // Real-time password validation
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', validatePassword);
+    }
+
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+    }
+
+    // Email validation
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('input', validateEmail);
+    }
+}
+
+function validatePassword() {
+    const password = document.getElementById('newPassword').value;
+    const helpText = document.querySelector('#newPassword + .form-help');
+
+    if (!helpText) return;
+
+    if (password.length < 8) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must be at least 8 characters long';
+    } else if (!/[A-Z]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one uppercase letter';
+    } else if (!/[a-z]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one lowercase letter';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one special character';
+    } else {
+        helpText.style.color = '#10b981';
+        helpText.textContent = 'Strong password ✓';
+    }
+}
+
+function validatePasswordMatch() {
+    const password = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const confirmInput = document.getElementById('confirmPassword');
+
+    if (confirmPassword && password !== confirmPassword) {
+        confirmInput.style.borderColor = '#ef4444';
+        showFieldError(confirmInput, 'Passwords do not match');
+    } else if (confirmPassword) {
+        confirmInput.style.borderColor = '#10b981';
+        clearFieldError(confirmInput);
+    }
+}
+
+function validateEmail() {
+    const email = document.getElementById('email').value;
+    const emailInput = document.getElementById('email');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email && !emailRegex.test(email)) {
+        emailInput.style.borderColor = '#ef4444';
+        showFieldError(emailInput, 'Please enter a valid email address');
+    } else if (email) {
+        emailInput.style.borderColor = '#10b981';
+        clearFieldError(emailInput);
+    }
+}
+
+function showFieldError(input, message) {
+    clearFieldError(input);
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error';
+    errorDiv.style.color = '#ef4444';
+    errorDiv.style.fontSize = '0.8rem';
+    errorDiv.style.marginTop = '4px';
+    errorDiv.textContent = message;
+    input.parentNode.appendChild(errorDiv);
+}
+
+function clearFieldError(input) {
+    const existingError = input.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+}
+
+function resetButton(button, originalText) {
+    button.disabled = false;
+    button.innerHTML = originalText;
+}
+
+function showLoadingButton(button, loadingText = 'Loading...') {
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner"></span> ${loadingText}`;
 }
 
 async function handlePersonalInfoUpdate(event) {
     event.preventDefault();
-    
+
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+
+    // Show loading state
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner"></span> Saving...';
+
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData.entries());
-    
+
+    // Validate required fields
+    if (!data.first_name || !data.last_name || !data.email) {
+        showAlert('Please fill in all required fields', 'error');
+        resetButton(submitButton, originalText);
+        return;
+    }
+
     // Remove empty current_password if no email change
     const originalEmail = document.getElementById('email').defaultValue;
     if (data.email === originalEmail && !data.current_password) {
         delete data.current_password;
     }
-    
+
     const token = localStorage.getItem('dr_resume_token');
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/update_account`, {
             method: 'PUT',
@@ -164,9 +284,9 @@ async function handlePersonalInfoUpdate(event) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(data),
-            credentials: 'include' // Include credentials for CORS
+            credentials: 'include'
         });
-        
+
         const result = await response.json();
         
         if (result.success) {
@@ -327,5 +447,35 @@ function formatDate(dateString) {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
+    });
+}
+
+function addNavigationListeners() {
+    // Navigation items
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Get the href attribute to determine navigation
+            const href = this.getAttribute('href');
+
+            // Handle navigation based on href
+            if (href) {
+                console.log('Navigation clicked:', this.textContent, 'href:', href);
+
+                // Navigate to the appropriate page
+                if (href.includes('scan_history')) {
+                    window.location.href = 'us10_scan_history.html';
+                } else if (href.includes('account')) {
+                    window.location.href = 'us10_account.html';
+                } else if (href.includes('dashboard')) {
+                    window.location.href = 'us10_dashboard.html';
+                } else {
+                    // For any other links, navigate directly
+                    window.location.href = href;
+                }
+            }
+        });
     });
 }

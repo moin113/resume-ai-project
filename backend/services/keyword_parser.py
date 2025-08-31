@@ -398,12 +398,13 @@ class KeywordParser:
     def _extract_tfidf_keywords(self, text: str, max_keywords: int) -> List[str]:
         """Extract keywords using TF-IDF"""
         try:
+            # For single documents, don't use max_df to avoid the error
             vectorizer = TfidfVectorizer(
                 max_features=max_keywords,
                 stop_words='english',
                 ngram_range=(1, 2),
-                min_df=1,
-                max_df=0.8
+                min_df=1
+                # Removed max_df to avoid "max_df corresponds to < documents than min_df" error
             )
             
             tfidf_matrix = vectorizer.fit_transform([text])

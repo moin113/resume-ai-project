@@ -152,9 +152,52 @@ class FileParser:
             return FileParser.extract_text_from_docx(file_path)
         elif file_type == 'doc':
             return FileParser.extract_text_from_doc(file_path)
+        elif file_type == 'txt':
+            return FileParser.extract_text_from_txt(file_path)
         else:
             return False, "", f"Unsupported file type: {file_type}"
     
+    @staticmethod
+    def extract_text_from_txt(file_path):
+        """
+        Extract text from TXT file
+
+        Args:
+            file_path (str): Path to the TXT file
+
+        Returns:
+            tuple: (success: bool, text: str, error: str)
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+
+            # Clean up the text
+            text = FileParser._clean_extracted_text(text)
+
+            if not text.strip():
+                return False, "", "No readable text found in the file."
+
+            logger.info(f"Successfully extracted {len(text)} characters from TXT: {file_path}")
+            return True, text, ""
+
+        except UnicodeDecodeError:
+            # Try with different encoding
+            try:
+                with open(file_path, 'r', encoding='latin-1') as file:
+                    text = file.read()
+                text = FileParser._clean_extracted_text(text)
+                if not text.strip():
+                    return False, "", "No readable text found in the file."
+                logger.info(f"Successfully extracted {len(text)} characters from TXT (latin-1): {file_path}")
+                return True, text, ""
+            except Exception as e:
+                logger.error(f"Error reading TXT file with latin-1 encoding: {file_path}, Error: {e}")
+                return False, "", f"Error reading text file: {str(e)}"
+        except Exception as e:
+            logger.error(f"Error reading TXT file: {file_path}, Error: {e}")
+            return False, "", f"Error reading text file: {str(e)}"
+
     @staticmethod
     def _clean_extracted_text(text):
         """
@@ -248,8 +291,8 @@ class FileParser:
         # Get file extension
         file_ext = filename.lower().split('.')[-1] if '.' in filename else ""
         
-        supported_types = ['pdf', 'doc', 'docx']
-        
+        supported_types = ['pdf', 'doc', 'docx', 'txt']
+
         if file_ext not in supported_types:
             return False, "", f"Unsupported file type. Supported types: {', '.join(supported_types)}"
         

@@ -5,7 +5,7 @@ API endpoints for retrieving user's scan history, statistics, and dashboard data
 
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from backend.models import db, User, Resume, JobDescription, MatchScore
+from backend.models import db, User, Resume, JobDescription, MatchScore, ScanHistory
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 import json
@@ -46,28 +46,31 @@ def get_scan_history():
         filter_score = request.args.get('filter_score', None)
         
         # Build query
-        query = db.session.query(MatchScore).filter_by(user_id=current_user_id)
-        
+        query = db.session.query(ScanHistory).filter_by(user_id=current_user_id)
+
         # Apply score filter
         if filter_score:
             if filter_score == 'excellent':
-                query = query.filter(MatchScore.overall_score >= 80)
+                query = query.filter(ScanHistory.overall_match_score >= 80)
             elif filter_score == 'good':
-                query = query.filter(MatchScore.overall_score >= 60, MatchScore.overall_score < 80)
+                query = query.filter(ScanHistory.overall_match_score >= 60, ScanHistory.overall_match_score < 80)
             elif filter_score == 'fair':
-                query = query.filter(MatchScore.overall_score >= 40, MatchScore.overall_score < 60)
+                query = query.filter(ScanHistory.overall_match_score >= 40, ScanHistory.overall_match_score < 60)
             elif filter_score == 'poor':
-                query = query.filter(MatchScore.overall_score < 40)
-        
+                query = query.filter(ScanHistory.overall_match_score < 40)
+
         # Apply sorting
-        if hasattr(MatchScore, sort_by):
-            sort_column = getattr(MatchScore, sort_by)
-            if sort_order == 'asc':
-                query = query.order_by(sort_column.asc())
-            else:
-                query = query.order_by(sort_column.desc())
+        if sort_by == 'overall_score':
+            sort_column = ScanHistory.overall_match_score
+        elif hasattr(ScanHistory, sort_by):
+            sort_column = getattr(ScanHistory, sort_by)
         else:
-            query = query.order_by(MatchScore.created_at.desc())
+            sort_column = ScanHistory.created_at
+
+        if sort_order == 'asc':
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
         
         # Paginate results
         pagination = query.paginate(
@@ -78,35 +81,42 @@ def get_scan_history():
         
         # Format scan history
         scan_history = []
-        for match in pagination.items:
-            # Get resume and job description details
-            resume = Resume.query.get(match.resume_id)
-            job_description = JobDescription.query.get(match.job_description_id)
-            
+        for scan in pagination.items:
+            # Get resume and job description details (if available)
+            resume = Resume.query.get(scan.resume_id) if scan.resume_id else None
+            job_description = JobDescription.query.get(scan.job_description_id) if scan.job_description_id else None
+
+            # Extract category scores
+            category_scores = scan.category_scores or {}
+
             scan_data = {
-                'id': match.id,
-                'match_score': round(match.overall_score, 2),
-                'score_category': match.get_score_category(),
-                'technical_score': round(match.technical_score, 2),
-                'soft_skills_score': round(match.soft_skills_score, 2),
-                'other_keywords_score': round(match.other_keywords_score, 2),
-                'matched_keywords': match.matched_keywords,
-                'total_resume_keywords': match.total_resume_keywords,
-                'total_jd_keywords': match.total_jd_keywords,
-                'algorithm_used': match.algorithm_used,
-                'created_at': match.created_at.isoformat() if match.created_at else None,
+                'id': scan.id,
+                'match_score': round(scan.overall_match_score, 2),
+                'score_category': scan.get_score_category(),
+                'technical_score': round(category_scores.get('technical_skills', 0), 2),
+                'soft_skills_score': round(category_scores.get('soft_skills', 0), 2),
+                'experience_score': round(category_scores.get('experience_match', 0), 2),
+                'education_score': round(category_scores.get('education_match', 0), 2),
+                'ats_compatibility': round(scan.ats_compatibility, 2),
+                'scan_type': scan.scan_type,
+                'algorithm_used': scan.algorithm_used,
+                'scan_duration': scan.scan_duration,
+                'created_at': scan.created_at.isoformat() if scan.created_at else None,
                 'resume': {
                     'id': resume.id if resume else None,
-                    'title': resume.title if resume else 'Untitled Resume',
-                    'filename': resume.original_filename if resume else 'Unknown',
+                    'title': resume.title if resume else 'Real-time Scan',
+                    'filename': resume.original_filename if resume else 'Real-time Resume',
                     'upload_date': resume.created_at.isoformat() if resume and resume.created_at else None
                 },
                 'job_description': {
                     'id': job_description.id if job_description else None,
-                    'title': job_description.title if job_description else 'Untitled Job',
-                    'company_name': job_description.company_name if job_description else 'Unknown Company',
+                    'title': job_description.title if job_description else 'Real-time Job Description',
+                    'company_name': job_description.company_name if job_description else 'Real-time Analysis',
                     'created_date': job_description.created_at.isoformat() if job_description and job_description.created_at else None
                 },
+                'has_detailed_analysis': bool(scan.detailed_analysis),
+                'has_recommendations': bool(scan.recommendations),
+                'recommendations_count': len(scan.recommendations) if scan.recommendations else 0,
                 'suggestions_available': True,  # All scans can generate suggestions
                 'premium_suggestions_available': True  # Premium available for all users
             }
@@ -159,36 +169,37 @@ def get_dashboard_stats():
         # Get basic counts
         total_resumes = Resume.query.filter_by(user_id=current_user_id, is_active=True).count()
         total_job_descriptions = JobDescription.query.filter_by(user_id=current_user_id, is_active=True).count()
-        total_scans = MatchScore.query.filter_by(user_id=current_user_id).count()
-        
+        total_scans = ScanHistory.query.filter_by(user_id=current_user_id).count()
+
         # Get score statistics
         score_stats = db.session.query(
-            func.avg(MatchScore.overall_score).label('avg_score'),
-            func.max(MatchScore.overall_score).label('max_score'),
-            func.min(MatchScore.overall_score).label('min_score')
+            func.avg(ScanHistory.overall_match_score).label('avg_score'),
+            func.max(ScanHistory.overall_match_score).label('max_score'),
+            func.min(ScanHistory.overall_match_score).label('min_score')
         ).filter_by(user_id=current_user_id).first()
-        
+
         # Get score distribution
-        excellent_count = MatchScore.query.filter_by(user_id=current_user_id).filter(MatchScore.overall_score >= 80).count()
-        good_count = MatchScore.query.filter_by(user_id=current_user_id).filter(MatchScore.overall_score >= 60, MatchScore.overall_score < 80).count()
-        fair_count = MatchScore.query.filter_by(user_id=current_user_id).filter(MatchScore.overall_score >= 40, MatchScore.overall_score < 60).count()
-        poor_count = MatchScore.query.filter_by(user_id=current_user_id).filter(MatchScore.overall_score < 40).count()
-        
+        excellent_count = ScanHistory.query.filter_by(user_id=current_user_id).filter(ScanHistory.overall_match_score >= 80).count()
+        good_count = ScanHistory.query.filter_by(user_id=current_user_id).filter(ScanHistory.overall_match_score >= 60, ScanHistory.overall_match_score < 80).count()
+        fair_count = ScanHistory.query.filter_by(user_id=current_user_id).filter(ScanHistory.overall_match_score >= 40, ScanHistory.overall_match_score < 60).count()
+        poor_count = ScanHistory.query.filter_by(user_id=current_user_id).filter(ScanHistory.overall_match_score < 40).count()
+
         # Get recent activity (last 7 days)
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
-        recent_scans = MatchScore.query.filter_by(user_id=current_user_id).filter(MatchScore.created_at >= seven_days_ago).count()
-        
-        # Get top performing resume
+        recent_scans = ScanHistory.query.filter_by(user_id=current_user_id).filter(ScanHistory.created_at >= seven_days_ago).count()
+
+        # Get top performing resume (only for stored resumes, not real-time scans)
         top_resume_query = db.session.query(
             Resume.id,
             Resume.title,
             Resume.original_filename,
-            func.avg(MatchScore.overall_score).label('avg_score'),
-            func.count(MatchScore.id).label('scan_count')
-        ).join(MatchScore).filter(
+            func.avg(ScanHistory.overall_match_score).label('avg_score'),
+            func.count(ScanHistory.id).label('scan_count')
+        ).join(ScanHistory).filter(
             Resume.user_id == current_user_id,
-            Resume.is_active == True
-        ).group_by(Resume.id).order_by(func.avg(MatchScore.overall_score).desc()).first()
+            Resume.is_active == True,
+            ScanHistory.resume_id.isnot(None)  # Only stored resumes, not real-time scans
+        ).group_by(Resume.id).order_by(func.avg(ScanHistory.overall_match_score).desc()).first()
         
         top_resume = None
         if top_resume_query:
@@ -249,35 +260,36 @@ def get_recent_activity():
             }), 404
         
         # Get recent scans (last 5)
-        recent_scans = db.session.query(MatchScore).filter_by(
+        recent_scans = db.session.query(ScanHistory).filter_by(
             user_id=current_user_id
-        ).order_by(MatchScore.created_at.desc()).limit(5).all()
-        
+        ).order_by(ScanHistory.created_at.desc()).limit(5).all()
+
         # Get recent resumes (last 3)
         recent_resumes = Resume.query.filter_by(
             user_id=current_user_id,
             is_active=True
         ).order_by(Resume.created_at.desc()).limit(3).all()
-        
+
         # Get recent job descriptions (last 3)
         recent_jds = JobDescription.query.filter_by(
             user_id=current_user_id,
             is_active=True
         ).order_by(JobDescription.created_at.desc()).limit(3).all()
-        
+
         # Format recent scans
         formatted_scans = []
         for scan in recent_scans:
-            resume = Resume.query.get(scan.resume_id)
-            job_description = JobDescription.query.get(scan.job_description_id)
-            
+            resume = Resume.query.get(scan.resume_id) if scan.resume_id else None
+            job_description = JobDescription.query.get(scan.job_description_id) if scan.job_description_id else None
+
             formatted_scans.append({
                 'id': scan.id,
-                'match_score': round(scan.overall_score, 2),
+                'match_score': round(scan.overall_match_score, 2),
                 'score_category': scan.get_score_category(),
-                'resume_title': resume.title if resume else 'Untitled Resume',
-                'job_title': job_description.title if job_description else 'Untitled Job',
-                'company_name': job_description.company_name if job_description else 'Unknown Company',
+                'resume_title': resume.title if resume else 'Real-time Scan',
+                'job_title': job_description.title if job_description else 'Real-time Job Description',
+                'company_name': job_description.company_name if job_description else 'Real-time Analysis',
+                'scan_type': scan.scan_type,
                 'created_at': scan.created_at.isoformat() if scan.created_at else None
             })
         

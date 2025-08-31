@@ -71,7 +71,15 @@ def create_app():
     # Serve landing page
     @app.route('/')
     def serve_frontend():
-        return render_template('index.html')
+        return render_template('us10_landing.html')
+
+    @app.route('/landing')
+    def serve_landing():
+        return render_template('us10_landing.html')
+
+    @app.route('/us10_landing.html')
+    def serve_landing_html():
+        return render_template('us10_landing.html')
 
     # Add direct HTML file routes for compatibility
     @app.route('/us10_login.html')
@@ -89,6 +97,14 @@ def create_app():
     @app.route('/us10_account.html')
     def serve_account_html():
         return render_template('us10_account.html')
+
+    @app.route('/us10_results.html')
+    def serve_results_html():
+        return render_template('us10_results.html')
+
+    @app.route('/results')
+    def serve_results():
+        return render_template('us10_results.html')
 
     # Basic configuration
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -117,6 +133,10 @@ def create_app():
     print(f"🔑 Environment SECRET_KEY: {os.getenv('SECRET_KEY', 'NOT_SET')[:10]}...")
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
     app.config['UPLOAD_FOLDER'] = upload_path
     app.config['RESUME_UPLOAD_FOLDER'] = upload_path
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
@@ -169,14 +189,27 @@ def create_app():
 
     # Initialize database
     try:
-        from backend import models
-        db = models.db
+        from backend.models import db
         db.init_app(app)
+
         with app.app_context():
+            # Create all tables
             db.create_all()
-        print("✅ Database initialized")
+            print("✅ Database tables created successfully")
+
+            # Test database connection
+            try:
+                db.session.execute(db.text('SELECT 1'))
+                db.session.commit()
+                print("✅ Database connection verified")
+            except Exception as conn_error:
+                print(f"⚠️ Database connection test failed: {conn_error}")
+
+        print("✅ Database initialized successfully")
     except Exception as e:
-        print(f"⚠️ Database initialization warning: {e}")
+        print(f"❌ Database initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
 
     # Register Blueprints with better error handling
     print("🔧 Registering blueprints...")

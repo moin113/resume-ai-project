@@ -75,13 +75,22 @@ def register():
         if errors:
             return jsonify({'success': False, 'message': 'Validation failed', 'errors': errors}), 400
         
-        new_user = User(first_name=first_name, last_name=last_name, email=email, password=password)
+        # Create new user with proper session handling
+        try:
+            new_user = User(first_name=first_name, last_name=last_name, email=email, password=password)
 
-        # Generate email verification token
-        verification_token = new_user.generate_email_verification_token()
+            # Generate email verification token
+            verification_token = new_user.generate_email_verification_token()
 
-        db.session.add(new_user)
-        db.session.commit()
+            # Use explicit session handling
+            from backend.models import db
+            db.session.add(new_user)
+            db.session.flush()  # Flush to get the ID
+            db.session.commit()
+
+        except Exception as db_error:
+            db.session.rollback()
+            raise db_error
 
         # Send verification email (for now, just return the token in response)
         # In production, you would send this via email service
@@ -94,6 +103,7 @@ def register():
         }), 201
         
     except Exception as e:
+        from backend.models import db
         db.session.rollback()
         return jsonify({'success': False, 'message': 'Registration failed. Please try again.', 'error': str(e)}), 500
 

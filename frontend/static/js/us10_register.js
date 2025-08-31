@@ -69,11 +69,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
-    
+
+    // Real-time password validation
+    passwordInput.addEventListener('input', function() {
+        validatePasswordStrength(this.value);
+    });
+
     confirmPasswordInput.addEventListener('input', function() {
         const password = passwordInput.value;
         const confirmPassword = this.value;
-        
+
         if (confirmPassword && password !== confirmPassword) {
             this.style.borderColor = '#ef4444';
         } else {
@@ -97,6 +102,23 @@ function validateForm(data) {
     
     if (data.password && data.password.length < 8) {
         errors.push('Password must be at least 8 characters long');
+    }
+
+    if (data.password) {
+        // Check for uppercase letter
+        if (!/[A-Z]/.test(data.password)) {
+            errors.push('Password must contain at least one uppercase letter');
+        }
+
+        // Check for lowercase letter
+        if (!/[a-z]/.test(data.password)) {
+            errors.push('Password must contain at least one lowercase letter');
+        }
+
+        // Check for special character
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) {
+            errors.push('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)');
+        }
     }
     
     if (data.password && data.confirm_password && data.password !== data.confirm_password) {
@@ -155,9 +177,53 @@ function clearAlerts() {
     document.getElementById('alertContainer').innerHTML = '';
 }
 
+function validatePasswordStrength(password) {
+    const passwordInput = document.getElementById('password');
+
+    // Remove any existing validation styling
+    passwordInput.style.borderColor = '#e5e7eb';
+
+    // Create or find help text element
+    let helpText = document.querySelector('#password + .form-help');
+    if (!helpText) {
+        helpText = document.createElement('div');
+        helpText.className = 'form-help';
+        helpText.style.fontSize = '0.875rem';
+        helpText.style.marginTop = '0.25rem';
+        passwordInput.parentNode.insertBefore(helpText, passwordInput.nextSibling);
+    }
+
+    if (!password) {
+        helpText.textContent = '';
+        return;
+    }
+
+    if (password.length < 8) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must be at least 8 characters long';
+        passwordInput.style.borderColor = '#ef4444';
+    } else if (!/[A-Z]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one uppercase letter';
+        passwordInput.style.borderColor = '#ef4444';
+    } else if (!/[a-z]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one lowercase letter';
+        passwordInput.style.borderColor = '#ef4444';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        helpText.style.color = '#ef4444';
+        helpText.textContent = 'Password must contain at least one special character';
+        passwordInput.style.borderColor = '#ef4444';
+    } else {
+        helpText.style.color = '#10b981';
+        helpText.textContent = 'Strong password ✓';
+        passwordInput.style.borderColor = '#10b981';
+    }
+}
+
 function setLoading(loading) {
     const submitBtn = document.getElementById('submitBtn');
-    
+
     if (loading) {
         submitBtn.disabled = true;
         submitBtn.classList.add('loading');
